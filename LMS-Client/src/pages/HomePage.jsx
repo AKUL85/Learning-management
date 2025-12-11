@@ -5,10 +5,10 @@ import { useNavigate } from 'react-router-dom';
 import { BookOpen, User, DollarSign, Clock, Target, Zap } from 'lucide-react';
 import Navbar from '../components/Navbar';
 
-// 🔧 CHANGE THIS depending on your backend URL
+
 const API_BASE = "http://localhost:4000/api/courses";
 
-// --- Toast Component ---
+
 const Toast = ({ message, type, isVisible, onClose }) => {
     if (!isVisible) return null;
 
@@ -51,12 +51,12 @@ export default function HomePage() {
         fetchCourses();
     }, []);
 
-    // 🔥 **REAL API FETCH**
+
     const fetchCourses = async () => {
         try {
             const res = await fetch(`${API_BASE}`, {
                 method: "GET",
-                credentials: "include", // to include cookies if using JWT cookies
+                credentials: "include",
                 headers: {
                     "Content-Type": "application/json",
                 },
@@ -67,7 +67,7 @@ export default function HomePage() {
             }
 
             const data = await res.json();
-            setCourses(data.courses || []); // expecting: { courses: [...] }
+            setCourses(data.courses || []);
         } catch (error) {
             showToast("Failed to load courses", "error");
         } finally {
@@ -110,7 +110,7 @@ export default function HomePage() {
             <Navbar />
             <Toast {...toast} onClose={() => setToast({ ...toast, isVisible: false })} />
 
-            {/* HERO */}
+
             <div className="bg-gradient-to-r from-gray-800 to-gray-900 text-white border-b border-cyan-800 shadow-xl">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
                     <motion.div
@@ -150,7 +150,7 @@ export default function HomePage() {
                 ) : (
                     <motion.div variants={container} initial="hidden" animate="show"
                         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        
+
                         {courses.map(course => (
                             <motion.div
                                 key={course._id}
@@ -160,11 +160,18 @@ export default function HomePage() {
                                 onClick={() => navigate(`/course/${course._id}`)}
                             >
 
-                                {/* Thumbnail */}
-                                <div className="h-48 bg-gradient-to-br from-indigo-900 to-gray-900 relative border-b border-cyan-700/50">
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                        <BookOpen className="w-20 h-20 text-indigo-400/20" />
-                                    </div>
+                                <div className="h-48 relative border-b border-cyan-700/50">
+                                    {course.thumbnail_url ? (
+                                        <img
+                                            src={course.thumbnail_url}
+                                            alt={course.title}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full bg-gray-800 flex items-center justify-center">
+                                            <BookOpen className="w-20 h-20 text-indigo-400/20" />
+                                        </div>
+                                    )}
                                     <div className="absolute top-4 right-4 bg-cyan-500/90 px-4 py-2 rounded-full shadow-lg">
                                         <span className="text-gray-900 font-extrabold text-lg">${course.price}</span>
                                     </div>
@@ -181,6 +188,14 @@ export default function HomePage() {
                                     <p className="text-gray-500 text-sm mb-4 line-clamp-2">
                                         {course.description}
                                     </p>
+                                    {course.video_url && (
+                                        <video
+                                            src={course.video_url}
+                                            controls
+                                            className="w-full mt-3 rounded-lg border border-gray-700"
+                                        />
+                                    )}
+
 
                                     <div className="flex items-center justify-between pt-4 border-t border-gray-700">
                                         <div className="flex items-center text-cyan-500 text-sm font-mono">

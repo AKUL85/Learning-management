@@ -85,7 +85,8 @@ export default function InstructorDashboard() {
   const { profile, refreshProfile } = useAuth(); // assume your AuthContext provides refreshProfile to update profile after changes
   const { toast, showToast, setToastState } = useToast();
 
-  const [newCourse, setNewCourse] = useState({ title: '', description: '', price: '' });
+  // Initialize newCourse state with null for file inputs
+  const [newCourse, setNewCourse] = useState({ title: '', description: '', price: '', image: null, video: null });
 
   useEffect(() => {
     fetchData();
@@ -119,36 +120,63 @@ export default function InstructorDashboard() {
   }
 
   async function createCourse() {
-    if (!profile || !newCourse.title || !newCourse.description || !newCourse.price) {
+    if (!profile || !newCourse.title || !newCourse.description || !newCourse.price || !newCourse.image || !newCourse.video) {
       showToast('Error: Complete all required input fields.', 'error');
       return;
     }
+
     try {
-      const payload = {
-        title: newCourse.title,
-        description: newCourse.description,
-        price: parseFloat(newCourse.price),
-      };
+      const formData = new FormData();
+      formData.append("title", newCourse.title);
+      formData.append("description", newCourse.description);
+      formData.append("price", newCourse.price);
+      formData.append("image", newCourse.image);
+      formData.append("video", newCourse.video);
+
+      // Add debugging
+      console.log("Sending FormData with:");
+      console.log("Title:", newCourse.title);
+      console.log("Image file:", newCourse.image);
+      console.log("Video file:", newCourse.video);
+
       const res = await fetch(`${API_BASE}/api/instructor/course`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        method: "POST",
+        credentials: "include",
+        body: formData, // <---- VERY IMPORTANT
       });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || 'Failed to create course');
+
+      // Log response for debugging
+      const responseText = await res.text();
+      console.log("Response:", responseText);
+
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        console.error("Failed to parse response as JSON:", e);
+        // If the server returns a 500, it might not be JSON, so check res.ok status first
+        if (!res.ok) {
+            throw new Error(responseText || `Failed to create course: ${res.status}`);
+        }
+        // If it was OK, but still not JSON, treat it as a success if response is empty
+        data = {};
       }
-      showToast(`Protocol Deployed. Reward of $500.00 confirmed.`, 'success');
+
+      if (!res.ok) {
+        throw new Error(data.message || `Failed to create course: ${res.status}`);
+      }
+
+      showToast("Protocol Deployed. Reward of $500.00 confirmed.", "success");
       setShowCreateModal(false);
-      setNewCourse({ title: '', description: '', price: '' });
-      // Refresh
+      setNewCourse({ title: "", description: "", price: "", image: null, video: null });
       fetchData();
+
     } catch (err) {
-      console.error(err);
-      showToast(err.message || 'Error: Failed to deploy new protocol.', 'error');
+      console.error("Course creation error:", err);
+      showToast(err.message || "Error: Failed to deploy new protocol.", "error");
     }
   }
+
 
   async function validateTransaction(transaction) {
     try {
@@ -266,6 +294,7 @@ export default function InstructorDashboard() {
             </div>
           </motion.div>
 
+          {/* RESTORED ORIGINAL PENDING VALIDATION CARD */}
           <motion.div className="bg-gray-800 rounded-xl border-l-4 border-yellow-500 shadow-xl p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -351,48 +380,159 @@ export default function InstructorDashboard() {
         </motion.div>
       </div>
 
-      {/* Create Course Modal */}
       <AnimatePresence>
         {showCreateModal && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50" onClick={() => setShowCreateModal(false)}>
-            <motion.div onClick={(e) => e.stopPropagation()} className="bg-gray-800/90 backdrop-blur-md rounded-2xl p-8 max-w-2xl w-full border border-cyan-700">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+            onClick={() => setShowCreateModal(false)}
+          >
+            <motion.div
+              onClick={(e) => e.stopPropagation()}
+              className="bg-gray-800/90 backdrop-blur-md rounded-2xl p-8 max-w-2xl w-full border border-cyan-700"
+            >
               <div className="flex justify-between items-center mb-6 border-b border-gray-700 pb-3">
                 <h3 className="text-2xl font-bold text-cyan-400">DEPLOY NEW PROTOCOL</h3>
-                <motion.button onClick={() => setShowCreateModal(false)} className="p-2 bg-gray-700 hover:bg-red-500 rounded-full transition-colors">
+                <motion.button
+                  onClick={() => setShowCreateModal(false)}
+                  className="p-2 bg-gray-700 hover:bg-red-500 rounded-full transition-colors"
+                >
                   <X className="w-6 h-6 text-white" />
                 </motion.button>
               </div>
 
               <div className="bg-green-900/40 border border-green-700 rounded-xl p-4 mb-6 shadow-inner">
                 <p className="text-sm text-green-300 flex items-center">
-                  <Wallet className='w-4 h-4 mr-2' /> Deployment reward: <span className="font-bold ml-1 text-green-400">$500.00</span> will be credited instantly.
+                  <Wallet className='w-4 h-4 mr-2' />
+                  Deployment reward:
+                  <span className="font-bold ml-1 text-green-400">$500.00</span> will be credited instantly.
                 </p>
               </div>
 
               <div className="space-y-6">
+
+                {/* TITLE */}
                 <div>
                   <label className="block text-sm font-medium text-gray-400 mb-2">Protocol Title</label>
-                  <input type="text" value={newCourse.title} onChange={(e) => setNewCourse({ ...newCourse, title: e.target.value })} className="w-full px-4 py-3 bg-transparent border-b border-gray-600 text-white placeholder-gray-500 focus:border-cyan-400 focus:outline-none transition-all" placeholder="e.g., Quantum Computing Fundamentals" required />
+                  <input
+                    type="text"
+                    value={newCourse.title}
+                    onChange={(e) => setNewCourse({ ...newCourse, title: e.target.value })}
+                    className="w-full px-4 py-3 bg-transparent border-b border-gray-600 text-white placeholder-gray-500 focus:border-cyan-400 focus:outline-none transition-all"
+                    placeholder="e.g., Quantum Computing Fundamentals"
+                    required
+                  />
                 </div>
 
+                {/* DESCRIPTION */}
                 <div>
                   <label className="block text-sm font-medium text-gray-400 mb-2">Description / Objectives</label>
-                  <textarea value={newCourse.description} onChange={(e) => setNewCourse({ ...newCourse, description: e.target.value })} className="w-full px-4 py-3 bg-transparent border-b border-gray-600 text-white placeholder-gray-500 focus:border-cyan-400 focus:outline-none transition-all h-32" placeholder="Briefly describe the learning outcome and target audience..." required />
+                  <textarea
+                    value={newCourse.description}
+                    onChange={(e) => setNewCourse({ ...newCourse, description: e.target.value })}
+                    className="w-full px-4 py-3 bg-transparent border-b border-gray-600 text-white placeholder-gray-500 focus:border-cyan-400 focus:outline-none transition-all h-32"
+                    placeholder="Briefly describe the learning outcome and target audience..."
+                    required
+                  />
                 </div>
 
+                {/* PRICE */}
                 <div>
                   <label className="block text-sm font-medium text-gray-400 mb-2">Acquisition Price ($)</label>
-                  <input type="number" step="0.01" min="0" value={newCourse.price} onChange={(e) => setNewCourse({ ...newCourse, price: e.target.value })} className="w-full px-4 py-3 bg-transparent border-b border-gray-600 text-white placeholder-gray-500 focus:border-cyan-400 focus:outline-none transition-all" placeholder="e.g., 99.99" required />
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={newCourse.price}
+                    onChange={(e) => setNewCourse({ ...newCourse, price: e.target.value })}
+                    className="w-full px-4 py-3 bg-transparent border-b border-gray-600 text-white placeholder-gray-500 focus:border-cyan-400 focus:outline-none transition-all"
+                    placeholder="e.g., 99.99"
+                    required
+                  />
                 </div>
 
-                <motion.button onClick={createCourse} className="w-full bg-cyan-500 text-gray-900 py-4 rounded-xl font-bold uppercase shadow-lg shadow-cyan-500/50 hover:bg-cyan-400 transition-colors flex items-center justify-center">
-                  <Upload className="w-5 h-5 mr-2" /> CONFIRM DEPLOYMENT
+                {/* IMAGE INPUT WITH VISUAL CONFIRMATION - CORRECTLY PLACED */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-2">
+                    Image File (Thumbnail)
+                  </label>
+                  <div className="flex items-center space-x-4">
+                    <input
+                      id="modal-image-upload" 
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) =>
+                        setNewCourse({ ...newCourse, image: e.target.files[0] })
+                      }
+                      className="hidden"
+                      required
+                    />
+                    <motion.label
+                      htmlFor="modal-image-upload" 
+                      whileHover={{ scale: 1.02 }}
+                      className="cursor-pointer bg-gray-700 hover:bg-cyan-600 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center border border-gray-600"
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      {newCourse.image ? "Change Image" : "Choose Image File"}
+                    </motion.label>
+
+                    <p className="text-sm text-gray-300 truncate max-w-xs">
+                      {newCourse.image
+                        ? newCourse.image.name
+                        : "No image file selected."}
+                    </p>
+                  </div>
+                </div>
+
+                {/* VIDEO INPUT WITH VISUAL CONFIRMATION - CORRECTLY PLACED */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-2">
+                    Video File (Content)
+                  </label>
+                  <div className="flex items-center space-x-4">
+                    <input
+                      id="modal-video-upload"
+                      type="file"
+                      accept="video/*"
+                      onChange={(e) =>
+                        setNewCourse({ ...newCourse, video: e.target.files[0] })
+                      }
+                      className="hidden"
+                      required
+                    />
+                    <motion.label
+                      htmlFor="modal-video-upload"
+                      whileHover={{ scale: 1.02 }}
+                      className="cursor-pointer bg-gray-700 hover:bg-cyan-600 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center border border-gray-600"
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      {newCourse.video ? "Change Video" : "Choose Video File"}
+                    </motion.label>
+
+                    <p className="text-sm text-gray-300 truncate max-w-xs">
+                      {newCourse.video
+                        ? newCourse.video.name
+                        : "No video file selected."}
+                    </p>
+                  </div>
+                </div>
+
+
+                <motion.button
+                  onClick={createCourse}
+                  className="w-full bg-cyan-500 text-gray-900 py-4 rounded-xl font-bold uppercase shadow-lg shadow-cyan-500/50 hover:bg-cyan-400 transition-colors flex items-center justify-center"
+                >
+                  <Upload className="w-5 h-5 mr-2" />
+                  CONFIRM DEPLOYMENT
                 </motion.button>
               </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
+
     </div>
   );
 }

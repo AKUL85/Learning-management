@@ -1,10 +1,13 @@
-
 const mongoose = require('mongoose');
 
 const CourseSchema = new mongoose.Schema({
   title: { type: String, required: true },
   description: { type: String },
   price: { type: Number, required: true, default: 0 },
+
+  thumbnail_url: { type: String },  
+  video_url: { type: String },      
+
   instructor_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Profile', required: true },
   instructor_name: { type: String },
   is_published: { type: Boolean, default: true },

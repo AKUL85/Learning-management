@@ -46,13 +46,13 @@ async function mongoPingTest() {
 }
 mongoPingTest();
 
-// ---------- Register Routes (ONLY ONCE!) ----------
+
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/instructor', instructorRoutes);
 app.use('/api/courses', courseRoutes);
 
-// ---------- Mongoose Connection ----------
+
 mongoose.connect(MONGO_URI)
   .then(() => {
     console.log('Mongoose connected to MongoDB');
