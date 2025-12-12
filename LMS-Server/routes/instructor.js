@@ -3,19 +3,20 @@ const router = express.Router();
 const auth = require('../middleware/Auth');
 const controller = require('../controllers/instructorController');
 
-// NEW multer import
-const { uploadFiles } = require('../middleware/upload');
+const { uploadCourseFiles } = require('../middleware/upload');
+
 
 router.use(auth);
 
 router.get('/dashboard', controller.getDashboard);
 
-// UPDATED COURSE ROUTE
+
 router.post(
   '/course',
-  uploadFiles,          // <-- this replaces uploadImage + uploadVideo
+  uploadCourseFiles,         
   controller.createCourse
 );
+
 
 router.get('/transactions/pending', controller.getPendingTransactions);
 router.post('/transaction/:id/validate', controller.validateTransaction);

@@ -8,7 +8,7 @@ import Navbar from '../components/Navbar';
 // --- Chart.js Registration ---
 ChartJS.register(ArcElement, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
-// --- Custom Toast/Notification Mock (HIGH-TECH STYLE) ---
+
 const Toast = ({ message, type, isVisible, onClose }) => {
     if (!isVisible) return null;
 
@@ -436,3 +436,75 @@ export default function LearnerDashboard() {
     </div>
   );
 }
+
+
+// src/components/dashboard/LearnerDashboard.jsx
+// import { useState, useEffect, useMemo } from 'react';
+// import Navbar from '../Navbar';
+// import DashboardHeader from './DashboardHeader';
+// import MetricCards from './MetricCards';
+// import ProgressCharts from './ProgressCharts';
+// import CourseList from './CourseList';
+// import CourseItem from './CourseItem';
+// import ToastNotification from './ToastNotification';
+// import { Pie, Bar } from 'react-chartjs-2';
+// import { Chart as ChartJS, ArcElement, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
+
+// ChartJS.register(ArcElement, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+
+// export default function LearnerDashboard() {
+//   const [enrollments, setEnrollments] = useState([]);
+//   const [selectedCourseId, setSelectedCourseId] = useState(null);
+//   const [materials, setMaterials] = useState([]);
+//   const [loading, setLoading] = useState(true);
+//   const [toast, setToast] = useState({ message: '', type: 'success', isVisible: false });
+
+//   const showToast = (msg, type = 'success') => {
+//     setToast({ message: msg, type, isVisible: true });
+//     setTimeout(() => setToast(prev => ({ ...prev, isVisible: false })), 3000);
+//   };
+
+//   // Mock data & logic (same as before)
+//   const mockEnrollments = useMemo(() => [/* ... same data */], []);
+//   const mockMaterials = useMemo(() => ({/* ... same */}), []);
+
+//   // fetch & complete logic (same, using mock)
+//   // ... (keep your existing fetchEnrollments, fetchMaterials, completeCourse)
+
+//   useEffect(() => { fetchEnrollments(); }, []);
+//   useEffect(() => { if (selectedCourseId) fetchMaterials(selectedCourseId); }, [selectedCourseId]);
+
+//   const completedCount = enrollments.filter(e => e.is_completed).length;
+//   const inProgressCount = enrollments.length - completedCount;
+
+//   // Chart data (same as before)
+//   const pieData = { /* ... */ };
+//   const barData = { /* ... */ };
+//   const chartOptions = { /* ... */ };
+
+//   if (loading) return <div className="min-h-screen bg-gray-900 flex items-center justify-center"><Navbar /><p className="text-cyan-400">Loading...</p></div>;
+
+//   return (
+//     <div className="min-h-screen bg-gray-900">
+//       <Navbar />
+//       <ToastNotification {...toast} onClose={() => setToast(prev => ({ ...prev, isVisible: false }))} />
+//       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+//         <DashboardHeader />
+//         <MetricCards total={enrollments.length} completed={completedCount} inProgress={inProgressCount} />
+//         {enrollments.length > 0 && <ProgressCharts pieData={pieData} barData={barData} chartOptions={chartOptions} />}
+//         <CourseList>
+//           {enrollments.map(enrollment => (
+//             <CourseItem
+//               key={enrollment.id}
+//               enrollment={enrollment}
+//               isExpanded={selectedCourseId === enrollment.course_id}
+//               onToggle={() => setSelectedCourseId(selectedCourseId === enrollment.course_id ? null : enrollment.course_id)}
+//               onComplete={() => completeCourse(enrollment.id)}
+//               materials={selectedCourseId === enrollment.course_id ? materials : []}
+//             />
+//           ))}
+//         </CourseList>
+//       </div>
+//     </div>
+//   );
+// }

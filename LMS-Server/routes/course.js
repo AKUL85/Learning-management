@@ -1,7 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const instructorController = require('../controllers/courseController');
+const courseController = require('../controllers/courseController');
 
-router.get('/', instructorController.getPublishedCourses);
+// GET all published courses
+router.get('/', courseController.getPublishedCourses);
+
+// ✅ GET course details by ID
+router.get('/:id', courseController.getCourseById);
 
 module.exports = router;

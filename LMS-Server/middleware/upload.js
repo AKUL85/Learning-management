@@ -1,22 +1,19 @@
 const multer = require("multer");
 const path = require("path");
 
-// Configure storage
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    // Store temporarily in uploads folder
     cb(null, 'uploads/');
   },
   filename: function (req, file, cb) {
-    // Create unique filename
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
   }
 });
 
-// File filter
+
 const fileFilter = (req, file, cb) => {
-  console.log("Incoming:", file.fieldname, file.mimetype);
+  console.log("Processing file:", file.fieldname, file.mimetype);
 
   const allowedImageTypes = [
     'image/jpeg',
@@ -26,15 +23,25 @@ const fileFilter = (req, file, cb) => {
   ];
 
   const allowedVideoTypes = [
-  'video/mp4',
-  'video/webm',
-  'video/ogg',
-  'video/quicktime',
-  'video/x-matroska',   // MKV
-  'video/x-msvideo',    // AVI
-  'video/x-flv'         // FLV
-];
+    'video/mp4',
+    'video/webm',
+    'video/ogg',
+    'video/quicktime',
+    'video/x-matroska',
+    'video/x-msvideo',
+    'video/x-flv'
+  ];
 
+  const allowedDocumentTypes = [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-powerpoint',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'text/plain'
+  ];
 
   if (file.fieldname === 'image' && allowedImageTypes.includes(file.mimetype)) {
     return cb(null, true);
@@ -44,19 +51,24 @@ const fileFilter = (req, file, cb) => {
     return cb(null, true);
   }
 
-  cb(new Error('Invalid file type: ' + file.mimetype), false);
-};
+  if (file.fieldname === 'materials' && allowedDocumentTypes.includes(file.mimetype)) {
+    return cb(null, true);
+  }
 
+  cb(new Error(`Invalid file type for ${file.fieldname}: ${file.mimetype}`), false);
+};
 
 const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 200 * 1024 * 1024
+    fileSize: 200 * 1024 * 1024 
   }
 });
 
-exports.uploadFiles = upload.fields([
+
+exports.uploadCourseFiles = upload.fields([
   { name: "image", maxCount: 1 },
-  { name: "video", maxCount: 1 }
+  { name: "video", maxCount: 1 },
+  { name: "materials", maxCount: 10 } 
 ]);
