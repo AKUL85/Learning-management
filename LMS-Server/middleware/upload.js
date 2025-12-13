@@ -40,7 +40,11 @@ const fileFilter = (req, file, cb) => {
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     'application/vnd.ms-powerpoint',
     'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-    'text/plain'
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'text/plain',
+    'application/vnd.oasis.opendocument.text',
+    'application/zip',
+    'application/x-zip-compressed'
   ];
 
   if (file.fieldname === 'image' && allowedImageTypes.includes(file.mimetype)) {
@@ -62,7 +66,7 @@ const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 200 * 1024 * 1024 
+    fileSize: 200 * 1024 * 1024
   }
 });
 
@@ -70,5 +74,5 @@ const upload = multer({
 exports.uploadCourseFiles = upload.fields([
   { name: "image", maxCount: 1 },
   { name: "video", maxCount: 1 },
-  { name: "materials", maxCount: 10 } 
+  { name: "materials", maxCount: 10 }
 ]);

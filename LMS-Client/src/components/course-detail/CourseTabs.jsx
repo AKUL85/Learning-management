@@ -11,10 +11,9 @@ const tabs = [
   { id: 'content', label: 'Content' },
   { id: 'materials', label: 'Materials' },
   { id: 'questions', label: 'Questions' },
-  { id: 'reviews', label: 'Reviews' },
 ];
 
-export default function CourseTabs({ activeTab, setActiveTab, course, videoPlaying, setVideoPlaying }) {
+export default function CourseTabs({ activeTab, setActiveTab, course, videoPlaying, setVideoPlaying, isEnrolled }) {
   return (
     <div className="mb-12">
       <div className="border-b border-gray-700">
@@ -49,10 +48,9 @@ export default function CourseTabs({ activeTab, setActiveTab, course, videoPlayi
         className="py-8"
       >
         {activeTab === 'overview' && <OverviewTab course={course} />}
-        {activeTab === 'content' && <ContentTab course={course} videoPlaying={videoPlaying} setVideoPlaying={setVideoPlaying} />}
+        {activeTab === 'content' && <ContentTab course={course} videoPlaying={videoPlaying} setVideoPlaying={setVideoPlaying} isEnrolled={isEnrolled} />}
         {activeTab === 'materials' && <MaterialsTab materials={course.materials} />}
         {activeTab === 'questions' && <QuestionsTab mcqs={course.mcqs} cqs={course.cqs} />}
-        {activeTab === 'reviews' && <ReviewsTab courseId={course._id} />}
       </motion.div>
     </div>
   );

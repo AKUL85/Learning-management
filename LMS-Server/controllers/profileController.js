@@ -3,7 +3,7 @@ const Profile = require('../models/Profile');
 exports.getProfile = async (req, res) => {
   try {
     const { userId } = req.params;
-    const profile = await Profile.findOne({ user: userId }).lean();
+    const profile = await Profile.findOne({ user: userId }).populate('enrolledCourses').lean();
     if (!profile) return res.status(404).json({ message: 'Profile not found' });
     res.json({ profile });
   } catch (error) {

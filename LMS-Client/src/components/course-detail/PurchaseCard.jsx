@@ -2,17 +2,17 @@
 import { motion } from 'framer-motion';
 import LoadingSpinner from "../ui/LoadingSpinner";
 
-import { ShoppingCart, CheckCircle, Lock, Video, FileText, Globe, Award, MessageSquare, Bookmark, Share2, Play } from 'lucide-react';
+import { ShoppingCart, CheckCircle, Lock, Video, FileText, Globe, Award, MessageSquare, Bookmark, Share2, Play, Edit } from 'lucide-react';
 
-export default function PurchaseCard({ course, isEnrolled, onPurchase, onGoToCourse, profile, onPreview }) {
- 
-    if(!course){
-      return(
-        <div>
-          <LoadingSpinner></LoadingSpinner>
-        </div>
-      )
-    }
+export default function PurchaseCard({ course, isEnrolled, onPurchase, onGoToCourse, profile, onPreview, onEdit }) {
+
+  if (!course) {
+    return (
+      <div>
+        <LoadingSpinner></LoadingSpinner>
+      </div>
+    )
+  }
   return (
     <div className="sticky top-24">
       {course.thumbnail_url && (
@@ -27,26 +27,42 @@ export default function PurchaseCard({ course, isEnrolled, onPurchase, onGoToCou
       )}
 
       <motion.div className="bg-gray-800/80 backdrop-blur-sm rounded-2xl border border-gray-700 shadow-2xl p-6">
-        <div className="text-center mb-6">
-          <div className="text-5xl font-extrabold text-white mb-2">
-            <span className="text-3xl">$</span>{course?.price?.toFixed(2)||'0.0'}
+        {!(isEnrolled && profile?.role === 'learner') && (
+          <div className="text-center mb-6">
+            <div className="text-5xl font-extrabold text-white mb-2">
+              <span className="text-3xl">$</span>{course?.price?.toFixed(2) || '0.0'}
+            </div>
+            <p className="text-gray-500">One-time payment</p>
           </div>
-          <p className="text-gray-500">One-time payment</p>
-        </div>
+        )}
 
         {profile?.role === 'learner' ? (
           isEnrolled ? (
-            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-              onClick={onGoToCourse}
-              className="w-full bg-green-500 text-gray-900 py-4 rounded-xl font-bold uppercase flex items-center justify-center mb-4">
-              <CheckCircle className="w-5 h-5 mr-2" /> Go to Course
-            </motion.button>
+            <div className="w-full bg-green-500/20 border border-green-500 text-green-400 py-4 rounded-xl font-bold uppercase flex items-center justify-center mb-4">
+              <CheckCircle className="w-5 h-5 mr-2" /> Course Enrolled
+            </div>
           ) : (
             <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
               onClick={onPurchase}
               className="w-full bg-cyan-500 text-gray-900 py-4 rounded-xl font-bold uppercase flex items-center justify-center mb-4">
               <ShoppingCart className="w-5 h-5 mr-2" /> Add to cart
             </motion.button>
+          )
+        ) : profile?.role === 'instructor' ? (
+          (profile?._id === course.instructor_id || profile?.id === course.instructor_id) ? (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={onEdit}
+              className="w-full bg-cyan-600 text-white py-4 rounded-xl font-bold shadow-lg hover:bg-cyan-500 transition-colors flex items-center justify-center mb-4"
+            >
+              <Edit className="w-5 h-5 mr-2" />
+              Edit Course
+            </motion.button>
+          ) : (
+            <button className="w-full bg-gray-600 text-white py-4 rounded-xl font-bold cursor-not-allowed mb-4">
+              Instructor View (Not Owner)
+            </button>
           )
         ) : (
           <div className="text-center text-gray-500 p-4 border border-gray-700 rounded-lg mb-4">

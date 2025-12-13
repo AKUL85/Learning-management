@@ -9,6 +9,9 @@ const authRoutes = require('./routes/auth');
 const profileRoutes = require('./routes/profile');
 const instructorRoutes = require('./routes/instructor');
 const courseRoutes = require('./routes/course');
+const transactionRoutes = require('./routes/transaction');
+const progressRoutes = require('./routes/progress');
+const adminRoutes = require('./routes/admin');
 
 const app = express();
 
@@ -51,6 +54,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/instructor', instructorRoutes);
 app.use('/api/courses', courseRoutes);
+app.use('/api/transactions', transactionRoutes);
+app.use('/api/progress', progressRoutes);
+app.use('/api/admin', adminRoutes);
 
 
 mongoose.connect(MONGO_URI)

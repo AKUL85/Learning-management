@@ -19,10 +19,13 @@ import HomePage from "./pages/HomePage";
 
 import LearnerDashboard from "./pages/LearnerDashboard";
 import InstructorDashboard from "./pages/InstructorDashboard";
+import AdminDashboard from "./pages/AdminDashboard";
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import CourseDetailPage from "./pages/ CourseDetailPage";
+import CourseDetailPage from "./pages/CourseDetailPage";
+import EditCoursePage from "./pages/EditCoursePage";
+import ProfilePage from "./pages/ProfilePage";
 
 // Wrapper component to use hooks inside router config
 function AppWrapper({ element }) {
@@ -98,7 +101,7 @@ const router = createBrowserRouter([
       <AppWrapper
         element={
           <ProtectedRoute>
-            <CourseDetailPage/>
+            <CourseDetailPage />
           </ProtectedRoute>
         }
       />
@@ -123,6 +126,42 @@ const router = createBrowserRouter([
         element={
           <ProtectedRoute requireRole="instructor">
             <InstructorDashboard />
+          </ProtectedRoute>
+        }
+      />
+    ),
+  },
+  {
+    path: "/admin-dashboard",
+    element: (
+      <AppWrapper
+        element={
+          <ProtectedRoute requireRole="admin">
+            <AdminDashboard />
+          </ProtectedRoute>
+        }
+      />
+    ),
+  },
+  {
+    path: "/instructor/course/:id/edit",
+    element: (
+      <AppWrapper
+        element={
+          <ProtectedRoute requireRole="instructor">
+            <EditCoursePage />
+          </ProtectedRoute>
+        }
+      />
+    ),
+  },
+  {
+    path: "/profile",
+    element: (
+      <AppWrapper
+        element={
+          <ProtectedRoute>
+            <ProfilePage />
           </ProtectedRoute>
         }
       />

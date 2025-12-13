@@ -29,13 +29,28 @@ const SectionItem = ({ title, lectures, duration, isPreview = false }) => (
 );
 
 export default function OverviewTab({ course }) {
-  const objectives = course.description
-    ? course.description.split('. ').filter(s => s.trim().length > 10).slice(0, 8)
-    : [
-        "Master cloud infrastructure from zero to production-ready",
-        "Deploy scalable applications using AWS, GCP, and Azure",
-        "Implement CI/CD pipelines with GitHub Actions and Jenkins",
-  ];
+  // 1. Objectives (What you'll learn)
+  const objectives = (course.objectives && course.objectives.length > 0)
+    ? course.objectives
+    : (course.description
+      ? course.description.split('. ').filter(s => s.trim().length > 10).slice(0, 8)
+      : ["Master cloud infrastructure from zero to production-ready"]);
+
+  // 2. Content Preview (Modules)
+  // Group videos into modules or just show list? Backend structure is: content: [{ section: "...", videos: [] }]
+  const modules = course.content || [];
+
+  // 3. Requirements
+  const requirements = course.requirements || [];
+
+  // 4. Audience
+  const audience = course.audience || [];
+
+  // Calculate totals
+  const totalLectures = modules.reduce((acc, m) => acc + (m.videos ? m.videos.length : 0), 0);
+
+  // Format total duration simply
+  const totalDuration = "Variable"; // Real calculation requires summing string durations or backend helper
 
   return (
     <div className="space-y-12">
@@ -68,32 +83,16 @@ export default function OverviewTab({ course }) {
         </h3>
 
         <div className="space-y-4">
-          <SectionItem
-            title="Module 1: Cloud Fundamentals & Architecture"
-            lectures={12}
-            duration="2h 30m"
-            isPreview={true}
-          />
-          <SectionItem
-            title="Module 2: Infrastructure as Code with Terraform"
-            lectures={18}
-            duration="4h 15m"
-          />
-          <SectionItem
-            title="Module 3: Containerization & Kubernetes"
-            lectures={22}
-            duration="6h 45m"
-          />
-          <SectionItem
-            title="Module 4: CI/CD & Automation"
-            lectures={15}
-            duration="3h 20m"
-          />
-          <SectionItem
-            title="Bonus: Real-World Project & Certification Prep"
-            lectures={8}
-            duration="2h 10m"
-          />
+          {modules.map((mod, i) => (
+            <SectionItem
+              key={i}
+              title={mod.section || `Module ${i + 1}`}
+              lectures={mod.videos ? mod.videos.length : 0}
+              duration={`${mod.videos ? mod.videos.length * 10 : 0}m (est)`}
+              isPreview={i === 0}
+            />
+          ))}
+          {modules.length === 0 && <p className="text-gray-400">No content added yet.</p>}
         </div>
 
         <div className="mt-8 p-6 bg-gradient-to-r from-cyan-900/20 to-blue-900/20 rounded-xl border border-cyan-700/30">
@@ -101,20 +100,13 @@ export default function OverviewTab({ course }) {
             <div className="flex items-center space-x-8 text-gray-300">
               <div className="flex items-center">
                 <PlayCircle className="w-6 h-6 mr-2 text-cyan-400" />
-                <span className="font-medium">75 lectures</span>
-              </div>
-              <div className="flex items-center">
-                <Clock className="w-6 h-6 mr-2 text-green-400" />
-                <span className="font-medium">18h 40m total length</span>
+                <span className="font-medium">{totalLectures} lectures</span>
               </div>
               <div className="flex items-center">
                 <Globe className="w-6 h-6 mr-2 text-purple-400" />
                 <span className="font-medium">All levels</span>
               </div>
             </div>
-            <button className="text-cyan-400 font-bold hover:text-cyan-300 transition">
-              Expand all sections →
-            </button>
           </div>
         </div>
       </motion.section>
@@ -129,22 +121,16 @@ export default function OverviewTab({ course }) {
           Requirements
         </h3>
         <ul className="space-y-4 text-gray-300">
-          <li className="flex items-start">
-            <div className="w-2 h-2 bg-cyan-400 rounded-full mt-2 mr-4 flex-shrink-0" />
-            Basic understanding of programming (any language)
-          </li>
-          <li className="flex items-start">
-            <div className="w-2 h-2 bg-cyan-400 rounded-full mt-2 mr-4 flex-shrink-0" />
-            A computer with internet connection
-          </li>
-          <li className="flex items-start">
-            <div className="w-2 h-2 bg-cyan-400 rounded-full mt-2 mr-4 flex-shrink-0" />
-            No prior cloud experience required — we start from zero!
-          </li>
-          <li className="flex items-start">
-            <div className="w-2 h-2 bg-cyan-400 rounded-full mt-2 mr-4 flex-shrink-0" />
-            Desire to master modern cloud engineering
-          </li>
+          {requirements.length > 0 ? (
+            requirements.map((req, i) => (
+              <li key={i} className="flex items-start">
+                <div className="w-2 h-2 bg-cyan-400 rounded-full mt-2 mr-4 flex-shrink-0" />
+                {req}
+              </li>
+            ))
+          ) : (
+            <li className="text-gray-400">No specific requirements.</li>
+          )}
         </ul>
       </motion.section>
 
@@ -157,22 +143,19 @@ export default function OverviewTab({ course }) {
         <h3 className="text-2xl font-extrabold text-white mb-6">
           Who This Course Is For
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {[
-            "Developers wanting to become cloud-native",
-            "DevOps engineers mastering automation",
-            "System administrators transitioning to cloud",
-            "Students preparing for cloud certifications",
-            "Tech leads architecting scalable systems",
-            "Anyone breaking into cloud computing in 2025+"
-          ].map((target, i) => (
-            <div key={i} className="flex items-center p-4 bg-gray-800/40 rounded-lg border border-gray-700">
-              <Users className="w-6 h-6 text-indigo-400 mr-4" />
-              <span className="text-gray-300">{target}</span>
-            </div>
-          ))}
+        <div className="space-y-4">
+          {audience.length > 0 ? (
+            audience.map((target, i) => (
+              <div key={i} className="flex items-center p-4 bg-gray-800/40 rounded-lg border border-gray-700">
+                <Users className="w-6 h-6 text-indigo-400 mr-4" />
+                <span className="text-gray-300">{target}</span>
+              </div>
+            ))
+          ) : (
+            <p className="text-gray-400">No specific audience defined.</p>
+          )}
         </div>
-      </motion.section>
-    </div>
+      </motion.section >
+    </div >
   );
 }

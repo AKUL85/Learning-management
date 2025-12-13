@@ -1,12 +1,14 @@
 // src/components/course-detail/tabs/ContentTab.jsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { PlayCircle, Lock, CheckCircle, Clock, ChevronDown, ChevronUp, FileText, Video, Headphones } from 'lucide-react';
+import { PlayCircle, Lock, CheckCircle, Clock, ChevronDown, ChevronUp, FileText, Video, Headphones, Circle } from 'lucide-react';
+import axios from 'axios';
+import { useAuth } from '../../../context/AuthContext';
 
-const CurriculumSection = ({ section, index, isEnrolled }) => {
+const CurriculumSection = ({ section, index, isEnrolled, onVideoSelect, onToggleComplete }) => {
   const [isOpen, setIsOpen] = useState(index === 0); // First section open by default
 
-  const totalDuration = section.lectures.reduce((acc, l) => acc + l.duration, 0);
+  const totalDuration = section.lectures.length + " lectures";
   const completedInSection = section.lectures.filter(l => l.completed).length;
 
   return (
@@ -47,16 +49,17 @@ const CurriculumSection = ({ section, index, isEnrolled }) => {
           {section.lectures.map((lecture, i) => (
             <div
               key={i}
-              className={`px-6 py-4 flex items-center justify-between hover:bg-gray-800/50 transition ${
-                lecture.preview ? 'bg-cyan-900/20' : ''
-              }`}
+              className={`px-6 py-4 flex items-center justify-between hover:bg-gray-800/50 transition ${lecture.preview ? 'bg-cyan-900/20' : ''}`}
             >
-              <div className="flex items-center space-x-4">
-                {lecture.type === 'video' && <Video className="w-5 h-5 text-cyan-400" />}
+              <div
+                className="flex items-center space-x-4 cursor-pointer flex-grow"
+                onClick={() => onVideoSelect(lecture.video_url)}
+              >
+                {lecture.type === 'video' && <Video className={`w-5 h-5 ${lecture.completed ? 'text-green-500' : 'text-cyan-400'}`} />}
                 {lecture.type === 'reading' && <FileText className="w-5 h-5 text-green-400" />}
                 {lecture.type === 'audio' && <Headphones className="w-5 h-5 text-purple-400" />}
 
-                <span className={`text-white ${lecture.completed ? 'line-through opacity-70' : ''}`}>
+                <span className={`text-white ${lecture.completed ? 'opacity-70' : ''}`}>
                   {lecture.title}
                 </span>
 
@@ -67,17 +70,28 @@ const CurriculumSection = ({ section, index, isEnrolled }) => {
                 )}
               </div>
 
-              <div className="flex items-center space-x-4 text-sm">
-                <span className="text-gray-400">{formatDuration(lecture.duration)}</span>
+              <div className="flex items-center space-x-4 text-sm z-10">
+                <span className="text-gray-400 mr-2">{formatDuration(lecture.duration)}</span>
 
-                {lecture.completed ? (
-                  <CheckCircle className="w-5 h-5 text-green-400" />
-                ) : lecture.locked && !isEnrolled ? (
+                {isEnrolled ? (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (lecture._id) onToggleComplete(lecture._id);
+                    }}
+                    className="focus:outline-none transform active:scale-95 transition"
+                    title="Mark as complete"
+                  >
+                    {lecture.completed ? (
+                      <CheckCircle className="w-6 h-6 text-green-500 hover:text-green-400" />
+                    ) : (
+                      <Circle className="w-6 h-6 text-gray-500 hover:text-gray-300" />
+                    )}
+                  </button>
+                ) : lecture.locked ? (
                   <Lock className="w-5 h-5 text-gray-600" />
-                ) : lecture.preview ? (
-                  <PlayCircle className="w-5 h-5 text-cyan-400 hover:text-cyan-300 cursor-pointer" />
                 ) : (
-                  <div className="w-5 h-5 rounded-full border-2 border-gray-600" />
+                  <div className="w-5 h-5" />
                 )}
               </div>
             </div>
@@ -88,43 +102,52 @@ const CurriculumSection = ({ section, index, isEnrolled }) => {
   );
 };
 
-const formatDuration = (minutes) => {
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+const formatDuration = (input) => {
+  if (typeof input === 'number') {
+    const h = Math.floor(input / 60);
+    const m = input % 60;
+    return h > 0 ? `${h}h ${m}m` : `${m}m`;
+  }
+  return input || '0m';
 };
 
-export default function ContentTab({ course, videoPlaying, setVideoPlaying }) {
-  const isEnrolled = true; // Replace with real enrollment check
+export default function ContentTab({ course, videoPlaying, setVideoPlaying, isEnrolled }) {
+  const { user } = useAuth();
+  const [currentVideoUrl, setCurrentVideoUrl] = useState(course?.video_url || (course?.content?.[0]?.videos?.[0]?.video_url));
+  const [progress, setProgress] = useState(null);
 
-  // Sample curriculum data
-  const curriculum = [
-    {
-      title: "Introduction to Cloud Infrastructure",
-      lectures: [
-        { title: "Welcome to the Course", duration: 5, type: "video", preview: true, completed: true },
-        { title: "Course Overview & Roadmap", duration: 8, type: "video", preview: true, completed: true },
-        { title: "Setting Up Your Cloud Lab", duration: 12, type: "video", completed: true },
-      ]
-    },
-    {
-      title: "AWS Fundamentals",
-      lectures: [
-        { title: "IAM & Security Best Practices", duration: 25, type: "video", locked: true, completed: false },
-        { title: "EC2 Deep Dive", duration: 45, type: "video", locked: true },
-        { title: "S3 Storage Mastery", duration: 38, type: "video", locked: true },
-        { title: "Reading: AWS Well-Architected Framework", duration: 20, type: "reading", locked: true },
-      ]
-    },
-    {
-      title: "Advanced Topics & Projects",
-      lectures: [
-        { title: "Building a Serverless API", duration: 60, type: "video", locked: true },
-        { title: "Kubernetes on EKS", duration: 90, type: "video", locked: true },
-        { title: "Final Project: Full-Stack Cloud App", duration: 120, type: "video", locked: true },
-      ]
+  useEffect(() => {
+    if (user && course?._id) {
+      axios.get(`http://localhost:4000/api/progress/${user._id}/${course._id}`)
+        .then(res => setProgress(res.data.progress))
+        .catch(err => console.error("Error fetching progress", err));
     }
-  ];
+  }, [user, course]);
+
+  const handleToggleComplete = async (videoId) => {
+    if (!user) return;
+    try {
+      const res = await axios.post(`http://localhost:4000/api/progress/${user._id}/${course._id}`, { videoId });
+      setProgress(res.data.progress);
+    } catch (err) {
+      console.error("Error updating progress", err);
+    }
+  };
+
+  // Transform backend content to component structure
+  const curriculum = course.content ? course.content.map(section => ({
+    title: section.section,
+    lectures: section.videos.map(video => ({
+      _id: video._id, // Ensure ID is passed
+      title: video.title,
+      duration: video.duration,
+      type: 'video',
+      video_url: video.video_url,
+      preview: false,
+      completed: progress?.completedVideos?.includes(video._id) || false,
+      locked: false
+    }))
+  })) : [];
 
   return (
     <div className="space-y-10">
@@ -156,7 +179,7 @@ export default function ContentTab({ course, videoPlaying, setVideoPlaying }) {
               controls
               autoPlay
               className="w-full aspect-video"
-              src={course.video_url}
+              src={currentVideoUrl || course.video_url}
               onEnded={() => setVideoPlaying(false)}
             >
               Your browser does not support the video tag.
@@ -183,18 +206,25 @@ export default function ContentTab({ course, videoPlaying, setVideoPlaying }) {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
             <div>
               <Clock className="w-10 h-10 text-cyan-400 mx-auto mb-2" />
-              <p className="text-2xl font-bold text-white">18h 40m</p>
+              <p className="text-2xl font-bold text-white">
+                {/* Logic for duration could be improved if data available */}
+                Variable
+              </p>
               <p className="text-gray-400">Total length</p>
             </div>
             <div>
               <Video className="w-10 h-10 text-green-400 mx-auto mb-2" />
-              <p className="text-2xl font-bold text-white">75</p>
+              <p className="text-2xl font-bold text-white">
+                {curriculum.reduce((acc, sec) => acc + sec.lectures.length, 0)}
+              </p>
               <p className="text-gray-400">Video lectures</p>
             </div>
             <div>
               <CheckCircle className="w-10 h-10 text-yellow-400 mx-auto mb-2" />
-              <p className="text-2xl font-bold text-white">8</p>
-              <p className="text-gray-400">Downloadable resources</p>
+              <p className="text-2xl font-bold text-white">
+                {progress?.completedVideos?.length || 0}
+              </p>
+              <p className="text-gray-400">Completed</p>
             </div>
           </div>
         </div>
@@ -202,7 +232,17 @@ export default function ContentTab({ course, videoPlaying, setVideoPlaying }) {
         {isEnrolled ? (
           <div className="space-y-4">
             {curriculum.map((section, i) => (
-              <CurriculumSection key={i} section={section} index={i} isEnrolled={isEnrolled} />
+              <CurriculumSection
+                key={i}
+                section={section}
+                index={i}
+                isEnrolled={isEnrolled}
+                onVideoSelect={(url) => {
+                  setCurrentVideoUrl(url);
+                  setVideoPlaying(true);
+                }}
+                onToggleComplete={handleToggleComplete}
+              />
             ))}
           </div>
         ) : (

@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
-import { Lock, Mail, User, Shield, GraduationCap, Code } from 'lucide-react'; 
+import { Lock, Mail, User, Shield, GraduationCap, Code } from 'lucide-react';
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('');
@@ -20,11 +20,11 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
-     
+
       await signUp(email, password, fullName, role);
       toast.success('Account created successfully! Preparing your workspace...');
-  
-      navigate('/bank-setup'); 
+
+      navigate('/bank-setup');
     } catch (error) {
       toast.error(error.message || 'Failed to initialize system account');
     } finally {
@@ -55,11 +55,10 @@ export default function RegisterPage() {
       onClick={() => setRole(targetRole)}
       whileHover={{ scale: 1.03 }}
       whileTap={{ scale: 0.97 }}
-      className={`p-4 rounded-xl border-2 transition-all duration-300 ${
-        currentRole === targetRole
+      className={`p-4 rounded-xl border-2 transition-all duration-300 ${currentRole === targetRole
           ? 'border-cyan-500 bg-cyan-900/40 shadow-xl shadow-cyan-500/20'
-          : 'border-gray-700 bg-gray-800/50 hover:border-cyan-500/50' 
-      } flex flex-col items-center`}
+          : 'border-gray-700 bg-gray-800/50 hover:border-cyan-500/50'
+        } flex flex-col items-center`}
     >
       <Icon className={`w-6 h-6 mb-2 transition-colors ${currentRole === targetRole ? 'text-cyan-400' : 'text-gray-500'}`} />
       <span className={`font-medium text-sm transition-colors ${currentRole === targetRole ? 'text-white' : 'text-gray-400'}`}>{label}</span>
@@ -67,11 +66,11 @@ export default function RegisterPage() {
   );
 
   return (
-    
+
     <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-     
+
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-15 animate-blob animation-delay-4000"></div>
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-15 animate-blob animation-delay-4000"></div>
       </div>
 
       <motion.div
@@ -80,13 +79,13 @@ export default function RegisterPage() {
         animate="visible"
         className="w-full max-w-sm z-10"
       >
-    
+
         <div className="text-center mb-10">
           <motion.div
             variants={itemVariants}
             className="inline-flex items-center justify-center w-16 h-16 bg-cyan-500 rounded-full mb-4 shadow-2xl shadow-cyan-500/50"
           >
-            <Shield className="w-8 h-8 text-gray-900" /> 
+            <Shield className="w-8 h-8 text-gray-900" />
           </motion.div>
           <motion.h1 variants={itemVariants} className="text-4xl font-extrabold text-white mb-2 tracking-wide">
             System Enrollment
@@ -96,13 +95,13 @@ export default function RegisterPage() {
           </motion.p>
         </div>
 
-       
+
         <motion.div
           variants={itemVariants}
           className="bg-gray-800/80 backdrop-blur-md border border-gray-700/50 rounded-2xl shadow-2xl p-8 transition duration-500 hover:shadow-cyan-500/20"
         >
           <form onSubmit={handleSubmit} className="space-y-6">
-          
+
             <motion.div variants={itemVariants}>
               <div className="relative group">
                 <User className="absolute left-0 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-cyan-400 transition-colors" />
@@ -117,7 +116,7 @@ export default function RegisterPage() {
               </div>
             </motion.div>
 
-      
+
             <motion.div variants={itemVariants}>
               <div className="relative group">
                 <Mail className="absolute left-0 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-cyan-400 transition-colors" />
@@ -132,7 +131,7 @@ export default function RegisterPage() {
               </div>
             </motion.div>
 
-       
+
             <motion.div variants={itemVariants}>
               <div className="relative group">
                 <Lock className="absolute left-0 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-cyan-400 transition-colors" />
@@ -148,23 +147,23 @@ export default function RegisterPage() {
               </div>
             </motion.div>
 
-       
+
             <motion.div variants={itemVariants}>
               <label className="block text-sm font-medium text-gray-400 mb-3">
                 System Role Assignment
               </label>
               <div className="grid grid-cols-2 gap-4">
-                <RoleButton 
-                  currentRole={role} 
-                  targetRole="learner" 
-                  icon={GraduationCap} 
-                  label="Learner (User)" 
+                <RoleButton
+                  currentRole={role}
+                  targetRole="learner"
+                  icon={GraduationCap}
+                  label="Learner (User)"
                 />
-                <RoleButton 
-                  currentRole={role} 
-                  targetRole="instructor" 
-                  icon={Code} 
-                  label="Instructor (Admin)" 
+                <RoleButton
+                  currentRole={role}
+                  targetRole="instructor"
+                  icon={Code}
+                  label="Instructor"
                 />
               </div>
             </motion.div>
@@ -173,7 +172,7 @@ export default function RegisterPage() {
               variants={itemVariants}
               type="submit"
               disabled={isLoading}
-              whileHover={{ scale: 1.05, boxShadow: "0 0 20px rgba(52, 211, 153, 0.5)" }} 
+              whileHover={{ scale: 1.05, boxShadow: "0 0 20px rgba(52, 211, 153, 0.5)" }}
               whileTap={{ scale: 0.95 }}
               className="w-full bg-cyan-500 text-gray-900 py-3 rounded-lg font-bold uppercase tracking-wider shadow-lg shadow-cyan-500/50 hover:bg-cyan-400 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed mt-8"
             >
