@@ -101,6 +101,7 @@ exports.approveCourse = async (req, res) => {
         });
 
         course.status = 'approved';
+        course.published_at = new Date();
         await course.save();
 
         res.status(200).json({ message: 'Course approved and instructor paid successfully.', course });

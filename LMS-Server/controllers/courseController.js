@@ -8,7 +8,7 @@ const UPLOAD_REWARD = 500;
 
 exports.getPublishedCourses = async (req, res) => {
   try {
-    const courses = await Course.find({ published_at: { $ne: null } }).sort({ createdAt: -1 });
+    const courses = await Course.find({ status: 'approved' }).sort({ createdAt: -1 });
     res.json({ courses });
   } catch (error) {
     console.error('Error in getPublishedCourses:', error);
@@ -143,7 +143,8 @@ exports.createCourse = async (req, res) => {
       instructor_id: profile._id.toString(),
       instructor_name: profile.fullName,
       thumbnail_url: thumbnailUrl,
-      published_at: new Date(),
+      thumbnail_url: thumbnailUrl,
+      published_at: null,
       duration_hours: 0,
       materials,
       content,

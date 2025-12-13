@@ -299,6 +299,7 @@ export default function InstructorDashboard() {
           totalCourses={courses.length}
           totalEarnings={totalEarnings}
           pendingTransactionsCount={pendingTransactions.length}
+          pendingCoursesCount={courses.filter(c => c.status === 'pending').length}
           totalAudience={transactions.filter((t) => t.type === 'course_purchase').length}
         />
 
