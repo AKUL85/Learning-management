@@ -5,7 +5,7 @@ import { PlayCircle, Lock, CheckCircle, Clock, ChevronDown, ChevronUp, FileText,
 import axios from 'axios';
 import { useAuth } from '../../../context/AuthContext';
 
-const CurriculumSection = ({ section, index, isEnrolled, onVideoSelect, onToggleComplete }) => {
+const CurriculumSection = ({ section, index, isEnrolled, onVideoSelect, onToggleComplete, isInstructor, isAdmin }) => {
   const [isOpen, setIsOpen] = useState(index === 0); // First section open by default
 
   const totalDuration = section.lectures.length + " lectures";
@@ -73,7 +73,7 @@ const CurriculumSection = ({ section, index, isEnrolled, onVideoSelect, onToggle
               <div className="flex items-center space-x-4 text-sm z-10">
                 <span className="text-gray-400 mr-2">{formatDuration(lecture.duration)}</span>
 
-                {isEnrolled ? (
+                {isEnrolled && !isInstructor && !isAdmin ? (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -111,7 +111,7 @@ const formatDuration = (input) => {
   return input || '0m';
 };
 
-export default function ContentTab({ course, videoPlaying, setVideoPlaying, isEnrolled }) {
+export default function ContentTab({ course, videoPlaying, setVideoPlaying, isEnrolled, isInstructor, isAdmin }) {
   const { user } = useAuth();
   const [currentVideoUrl, setCurrentVideoUrl] = useState(course?.video_url || (course?.content?.[0]?.videos?.[0]?.video_url));
   const [progress, setProgress] = useState(null);
@@ -152,7 +152,7 @@ export default function ContentTab({ course, videoPlaying, setVideoPlaying, isEn
   return (
     <div className="space-y-10">
       {/* Video Player */}
-      {course.video_url ? (
+      {(currentVideoUrl || course.video_url) ? (
         <div className="relative rounded-2xl overflow-hidden bg-black shadow-2xl border border-gray-700">
           {!videoPlaying ? (
             <div className="aspect-video relative">
@@ -176,6 +176,7 @@ export default function ContentTab({ course, videoPlaying, setVideoPlaying, isEn
             </div>
           ) : (
             <video
+              key={currentVideoUrl || course.video_url}
               controls
               autoPlay
               className="w-full aspect-video"
@@ -242,6 +243,8 @@ export default function ContentTab({ course, videoPlaying, setVideoPlaying, isEn
                   setVideoPlaying(true);
                 }}
                 onToggleComplete={handleToggleComplete}
+                isInstructor={isInstructor}
+                isAdmin={isAdmin}
               />
             ))}
           </div>

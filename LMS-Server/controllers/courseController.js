@@ -186,20 +186,22 @@ exports.getCourseById = async (req, res) => {
       return res.status(404).json({ message: "Course not found" });
     }
 
-    const userId = req.user;
+    const userId = req.user ? req.user.userId : null;
     let hasAccess = false;
 
     if (userId) {
-      if (course.instructor_id._id.toString() === userId) {
-        hasAccess = true;
-      } else {
-        const profile = await Profile.findOne({ user: userId });
-        if (profile) {
-          if (profile.role === 'admin') {
-            hasAccess = true;
-          } else if (profile.enrolledCourses.includes(course._id)) {
-            hasAccess = true;
-          }
+      const profile = await Profile.findOne({ user: userId });
+      if (profile) {
+        const isInstructor = course.instructor_id.toString() === profile._id.toString();
+
+        if (isInstructor) {
+          hasAccess = true;
+        }
+        else if (profile.role === 'admin') {
+          hasAccess = true;
+        }
+        else if (profile.enrolledCourses.map(id => id.toString()).includes(course._id.toString())) {
+          hasAccess = true;
         }
       }
     }
@@ -287,7 +289,11 @@ const handleCourseUpdate = async (req, res) => {
     }
 
     const updates = {};
-    const { title, description, price, thumbnail_url, requirements, audience, objectives, materials, content, mcqs, cqs } = req.body;
+    const {
+      title, description, price, thumbnail_url, requirements, audience,
+      objectives, materials, content, mcqs, cqs,
+      video_title, material_titles
+    } = req.body;
 
     const isValidString = (val) => val !== undefined && val !== null && val !== "null" && val !== "undefined" && typeof val === "string" && val.trim() !== "";
 
@@ -352,6 +358,16 @@ const handleCourseUpdate = async (req, res) => {
       updates.content = existingContent;
     }
 
+    // Parse material titles mapping if provided
+    let parsedMaterialTitles = {};
+    try {
+      if (material_titles) {
+        parsedMaterialTitles = JSON.parse(material_titles); // Expected: { "filename.pdf": "Custom Title", ... }
+      }
+    } catch (e) {
+      console.warn("Failed to parse material_titles", e);
+    }
+
     const newMaterialFiles = [];
     if (req.files && req.files.materials) {
       for (const file of req.files.materials) {
@@ -363,9 +379,13 @@ const handleCourseUpdate = async (req, res) => {
             resource_type: isPdf ? "raw" : "auto"
           };
           const result = await cloudinary.uploader.upload(file.path, uploadConfig);
+
+          // Use custom title if available, else filename
+          const fileTitle = parsedMaterialTitles[file.originalname] || file.originalname;
+
           newMaterialFiles.push({
             id: result.public_id || Date.now().toString(),
-            title: file.originalname,
+            title: fileTitle,
             type: ext,
             size: (file.size / (1024 * 1024)).toFixed(2) + " MB",
             url: result.secure_url,
@@ -375,22 +395,39 @@ const handleCourseUpdate = async (req, res) => {
       }
     }
 
-    let newContentBlock = null;
-    if (req.files && req.files.video && req.files.video[0]) {
-      try {
-        const vid = await cloudinary.uploader.upload(req.files.video[0].path, {
-          folder: "teaching_app/videos",
-          resource_type: "video"
-        });
-        newContentBlock = {
-          section: `Module ${course.content ? course.content.length + 1 : 1}`,
-          videos: [{
-            title: "New Lesson",
-            duration: "0:00",
-            video_url: vid.secure_url
-          }]
-        };
-      } catch (e) { console.error("Vid upload fail", e); }
+    let parsedVideoTitles = {};
+    try {
+      if (video_title) {
+        // Fallback for single video legacy upload (though frontend now sends array)
+        parsedVideoTitles['default'] = video_title;
+      }
+      if (req.body.video_titles) {
+        parsedVideoTitles = JSON.parse(req.body.video_titles);
+      }
+    } catch (e) { console.warn("Failed to parse video_titles", e); }
+
+    const newContentBlocks = [];
+    if (req.files && req.files.video) {
+      // req.files.video is an array
+      for (const file of req.files.video) {
+        try {
+          const vid = await cloudinary.uploader.upload(file.path, {
+            folder: "teaching_app/videos",
+            resource_type: "video"
+          });
+
+          const customTitle = parsedVideoTitles[file.originalname] || file.originalname.replace(/\.[^/.]+$/, "") || "New Lesson";
+
+          newContentBlocks.push({
+            section: `Module ${course.content ? course.content.length + newContentBlocks.length + 1 : newContentBlocks.length + 1}`,
+            videos: [{
+              title: customTitle,
+              duration: "0:00",
+              video_url: vid.secure_url
+            }]
+          });
+        } catch (e) { console.error("Vid upload fail", e); }
+      }
     }
 
     cleanupFiles(req.files);
@@ -400,17 +437,19 @@ const handleCourseUpdate = async (req, res) => {
 
     if (newMaterialFiles.length > 0) {
       if (updates.materials) {
+        // If we are replacing materials entirely (rare in partial update but possible), append new ones
         updates.materials = [...updates.materials, ...newMaterialFiles];
       } else {
+        // Otherwise just push to existing
         pushOps.materials = { $each: newMaterialFiles };
       }
     }
 
-    if (newContentBlock) {
+    if (newContentBlocks.length > 0) {
       if (updates.content) {
-        updates.content.push(newContentBlock);
+        updates.content.push(...newContentBlocks);
       } else {
-        pushOps.content = newContentBlock;
+        pushOps.content = { $each: newContentBlocks };
       }
     }
 

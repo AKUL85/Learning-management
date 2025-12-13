@@ -22,9 +22,9 @@ export default function EditCoursePage() {
     const [description, setDescription] = useState('');
     const [price, setPrice] = useState('');
 
-    // New additions
+    // New additions - State now tracks objects { file, title }
     const [newMaterials, setNewMaterials] = useState([]);
-    const [newVideo, setNewVideo] = useState(null);
+    const [newVideos, setNewVideos] = useState([]); // Changed to array
     const [newThumbnail, setNewThumbnail] = useState(null);
 
     // Lists (We load existing and allow adding more)
@@ -66,6 +66,24 @@ export default function EditCoursePage() {
         }
     };
 
+    const handleMaterialSelect = (e) => {
+        const files = Array.from(e.target.files);
+        const mapped = files.map(f => ({
+            file: f,
+            title: f.name // Default title to filename
+        }));
+        setNewMaterials(prev => [...prev, ...mapped]);
+    };
+
+    const handleVideoSelect = (e) => {
+        const files = Array.from(e.target.files);
+        const mapped = files.map(f => ({
+            file: f,
+            title: f.name.replace(/\.[^/.]+$/, "") // Default title without extension
+        }));
+        setNewVideos(prev => [...prev, ...mapped]);
+    };
+
     const handleUpdate = async (e) => {
         e.preventDefault();
         setSubmitting(true);
@@ -78,10 +96,14 @@ export default function EditCoursePage() {
 
             // Append MCQs and CQs (Filter out incomplete ones to avoid validation errors)
             const validMcqs = mcqs
-                .filter(m => m.question.trim() !== "" && m.options.every(o => o.trim() !== ""))
                 .map(m => ({
                     ...m,
-                    correct_option: (typeof m.correct_option === 'number' && m.correct_option >= 0 && m.correct_option < 4) ? m.correct_option : 0
+                    options: m.options.filter(o => o.trim() !== "")
+                }))
+                .filter(m => m.question.trim() !== "" && m.options.length >= 2)
+                .map(m => ({
+                    ...m,
+                    correct_option: (typeof m.correct_option === 'number' && m.correct_option >= 0 && m.correct_option < m.options.length) ? m.correct_option : 0
                 }));
             const validCqs = cqs.filter(c => c.question.trim() !== "" && c.answer.trim() !== "");
 
@@ -93,14 +115,20 @@ export default function EditCoursePage() {
             formData.append('requirements', JSON.stringify(validRequirements));
             formData.append('audience', JSON.stringify(validAudience));
 
-            // Append new files
-            newMaterials.forEach(file => {
-                formData.append('materials', file);
+            // Append new files and metadata
+            const materialTitles = {};
+            newMaterials.forEach(item => {
+                formData.append('materials', item.file);
+                materialTitles[item.file.name] = item.title;
             });
+            formData.append('material_titles', JSON.stringify(materialTitles));
 
-            if (newVideo) {
-                formData.append('video', newVideo);
-            }
+            const videoTitles = {};
+            newVideos.forEach(item => {
+                formData.append('video', item.file);
+                videoTitles[item.file.name] = item.title;
+            });
+            formData.append('video_titles', JSON.stringify(videoTitles));
 
             if (newThumbnail) {
                 formData.append('image', newThumbnail);
@@ -242,26 +270,100 @@ export default function EditCoursePage() {
                             <h3 className="text-xl font-semibold text-white mb-4 flex items-center"><Upload className="w-5 h-5 mr-2 text-cyan-400" /> Add New Resources</h3>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Materials Column */}
                                 <div>
-                                    <label className="block text-sm text-gray-400 mb-2">Upload NEW Materials (Appends to list)</label>
-                                    <input
-                                        type="file"
-                                        multiple
-                                        onChange={(e) => setNewMaterials([...e.target.files])}
-                                        className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-cyan-600 file:text-white hover:file:bg-cyan-700"
-                                    />
-                                    {newMaterials.length > 0 && <p className="mt-2 text-green-400 text-sm">{newMaterials.length} files selected</p>}
+                                    <label className="block text-sm text-gray-400 mb-2">Upload NEW Materials</label>
+                                    <div className="relative">
+                                        <input
+                                            type="file"
+                                            multiple
+                                            onChange={handleMaterialSelect}
+                                            className="hidden"
+                                            id="material-upload"
+                                        />
+                                        <label htmlFor="material-upload" className="cursor-pointer bg-gray-800 border border-gray-600 hover:border-cyan-500 text-gray-300 py-2 px-4 rounded-lg block text-center transition-colors">
+                                            Select Files
+                                        </label>
+                                    </div>
+
+                                    {/* Selected Materials List */}
+                                    {newMaterials.length > 0 && (
+                                        <div className="mt-4 space-y-3">
+                                            {newMaterials.map((item, idx) => (
+                                                <div key={idx} className="bg-gray-800 p-3 rounded border border-gray-700">
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <span className="text-xs text-gray-500 truncate block max-w-[200px]">{item.file.name}</span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setNewMaterials(newMaterials.filter((_, i) => i !== idx))}
+                                                            className="text-red-400 hover:text-red-300"
+                                                        >
+                                                            <X className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                    <input
+                                                        type="text"
+                                                        value={item.title}
+                                                        onChange={(e) => {
+                                                            const updated = [...newMaterials];
+                                                            updated[idx].title = e.target.value;
+                                                            setNewMaterials(updated);
+                                                        }}
+                                                        placeholder="Enter material display title"
+                                                        className="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1 text-sm text-white focus:border-cyan-500 outline-none"
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
 
+                                {/* Video Column */}
                                 <div>
-                                    <label className="block text-sm text-gray-400 mb-2">Upload NEW Video Module</label>
-                                    <input
-                                        type="file"
-                                        accept="video/*"
-                                        onChange={(e) => setNewVideo(e.target.files[0])}
-                                        className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700"
-                                    />
-                                    {newVideo && <p className="mt-2 text-green-400 text-sm">Video selected: {newVideo.name}</p>}
+                                    <label className="block text-sm text-gray-400 mb-2">Upload NEW Video Modules</label>
+                                    <div className="relative">
+                                        <input
+                                            type="file"
+                                            accept="video/*"
+                                            multiple
+                                            onChange={handleVideoSelect}
+                                            className="hidden"
+                                            id="video-upload"
+                                        />
+                                        <label htmlFor="video-upload" className="cursor-pointer bg-gray-800 border border-gray-600 hover:border-indigo-500 text-gray-300 py-2 px-4 rounded-lg block text-center transition-colors">
+                                            Select Videos
+                                        </label>
+                                    </div>
+
+                                    {newVideos.length > 0 && (
+                                        <div className="mt-4 space-y-3">
+                                            {newVideos.map((item, idx) => (
+                                                <div key={idx} className="bg-gray-800 p-3 rounded border border-indigo-500/30">
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <span className="text-xs text-gray-500 truncate block max-w-[200px]">{item.file.name}</span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setNewVideos(newVideos.filter((_, i) => i !== idx))}
+                                                            className="text-red-400 hover:text-red-300"
+                                                        >
+                                                            <X className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                    <input
+                                                        type="text"
+                                                        value={item.title}
+                                                        onChange={(e) => {
+                                                            const updated = [...newVideos];
+                                                            updated[idx].title = e.target.value;
+                                                            setNewVideos(updated);
+                                                        }}
+                                                        placeholder="Enter video lesson title"
+                                                        className="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1 text-sm text-white focus:border-indigo-500 outline-none"
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>

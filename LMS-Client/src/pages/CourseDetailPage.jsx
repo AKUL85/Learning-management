@@ -62,7 +62,9 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api'
 const api = {
   getCourse: async (courseId) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/courses/${courseId}`);
+      const response = await fetch(`${API_BASE_URL}/courses/${courseId}`, {
+        credentials: 'include'
+      });
       if (!response.ok) throw new Error('Failed to fetch course');
       return await response.json();
     } catch (error) {
@@ -105,9 +107,12 @@ export default function CourseDetailPage() {
   useEffect(() => {
     if (id) {
       fetchCourse();
-      checkEnrollment();
     }
-  }, [id, profile?.id]);
+  }, [id]);
+
+  useEffect(() => {
+    checkEnrollment();
+  }, [profile, course, id]);
 
   const fetchCourse = async () => {
     try {
@@ -132,11 +137,19 @@ export default function CourseDetailPage() {
       // Handle both ObjectId strings or populated objects if applicable (usually strings in this context)
       const enrolled = profile.enrolledCourses?.some(c => c === id || c._id === id);
 
-      if (enrolled) {
+      // Also check if the user is the instructor (instructors should have access)
+      // course.instructor_id might be populated (object) or just an ID (string)
+      let isInstructor = false;
+      if (course && course.instructor_id) {
+        const instructorId = course.instructor_id._id || course.instructor_id;
+        if (instructorId.toString() === profile._id.toString()) {
+          isInstructor = true;
+        }
+      }
+
+      if (enrolled || isInstructor || profile.role === 'admin') {
         setIsEnrolled(true);
       } else {
-        // Fallback to API if profile isn't fully updated or structure differs
-        // Keeping it simple for now as we added the field to profile
         setIsEnrolled(false);
       }
     } catch (error) {
@@ -259,6 +272,8 @@ export default function CourseDetailPage() {
               videoPlaying={videoPlaying}
               setVideoPlaying={setVideoPlaying}
               isEnrolled={isEnrolled}
+              isInstructor={(course?.instructor_id?._id || course?.instructor_id)?.toString() === profile?._id?.toString()}
+              isAdmin={profile?.role === 'admin'}
             />
           </div>
 

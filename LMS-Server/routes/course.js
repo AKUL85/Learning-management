@@ -8,7 +8,9 @@ router.get('/', courseController.getPublishedCourses);
 
 router.post('/', auth, uploadCourseFiles, courseController.createCourse);
 
-router.get('/:id', courseController.getCourseById);
+const optionalAuth = require('../middleware/OptionalAuth');
+
+router.get('/:id', optionalAuth, courseController.getCourseById);
 
 router.put('/:id', auth, uploadCourseFiles, courseController.updateCourse);
 
