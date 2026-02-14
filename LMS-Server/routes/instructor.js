@@ -17,7 +17,6 @@ router.post(
   controller.createCourse
 );
 
-
 router.get('/transactions/pending', controller.getPendingTransactions);
 router.post('/transaction/:id/validate', controller.validateTransaction);
 

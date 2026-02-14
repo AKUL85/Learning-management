@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CheckCircle, ThumbsUp } from 'lucide-react';
@@ -171,33 +172,27 @@ export default function CourseDetailPage() {
     setPurchasing(true);
 
     try {
-      // Use new transaction API
-      const response = await fetch(`${API_BASE_URL}/transactions/purchase`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          userId: profile.user, // Send User ID, as profile.id is Profile ID
-          courseId: course._id
-        })
+      const res = await axios.post('/api/transaction/purchase', {
+        userId: profile.user._id || profile.user,
+        courseId: id,
+        bankSecret: secretKey
+      }, {
+        withCredentials: true
       });
 
-      const data = await response.json();
-
-      if (!response.ok) throw new Error(data.message || 'Purchase failed');
-
-      if (refreshProfile) {
-        await refreshProfile();
+      if (res.data.success) {
+        showToast('Course purchased successfully!', 'success');
+        setIsEnrolled(true);
+        setShowPurchaseModal(false);
+        // Refresh profile to update balance
+        if (refreshProfile) {
+          await refreshProfile();
+        }
+        // Redirect to dashboard or stay on page
+        navigate('/learner-dashboard');
       }
-
-      showToast('Course purchased successfully!', 'success');
-      setShowPurchaseModal(false);
-      setIsEnrolled(true);
-      navigate('/learner-dashboard');
     } catch (error) {
-      showToast(error.message || 'Error: Failed to complete purchase.', 'error');
+      showToast(error.response?.data?.message || 'Purchase failed', 'error');
     } finally {
       setPurchasing(false);
     }
@@ -259,10 +254,13 @@ export default function CourseDetailPage() {
 
             <InstructorCard
               instructor_name={course.instructor_name}
-              instructor_bio="Senior Developer & Instructor" // Placeholder or add to backend
+              instructor_bio={course.instructor_id?.bio}
               total_students={instructorStats.totalStudents}
               total_courses={instructorStats.totalCourses}
               rating={instructorStats.rating}
+              profession={course.instructor_id?.profession}
+              speciality={course.instructor_id?.speciality}
+              skills={course.instructor_id?.skills}
             />
 
             <CourseTabs

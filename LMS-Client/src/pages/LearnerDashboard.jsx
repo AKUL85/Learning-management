@@ -23,9 +23,7 @@ export default function LearnerDashboard() {
     setTimeout(() => setToast({ ...toast, isVisible: false }), 3000);
   };
 
-  // ------------------------
-  // MOCK DATA (Unchanged)
-  // ------------------------
+
   const mockEnrollments = useMemo(() => ([
     {
       id: 1,
@@ -81,44 +79,52 @@ export default function LearnerDashboard() {
     ],
   }), []);
 
-  // ------------------------
-  // FETCH / COMPLETE LOGIC (Unchanged, uses mock)
-  // ------------------------
-  // ------------------------
-  // REAL DATA LOGIC
-  // ------------------------
-  const { profile, refreshProfile } = useAuth(); // Get profile from AuthContext
+
+  const { profile, refreshProfile } = useAuth();
   const [progressData, setProgressData] = useState({});
 
   useEffect(() => {
-    // Refresh profile on mount to ensure latest enrollment data
+
     if (refreshProfile) refreshProfile().then(() => setLoading(false));
     else setLoading(false);
   }, []);
 
-  // Fetch progress for all enrolled courses
+
   useEffect(() => {
     const fetchAllProgress = async () => {
-      if (!profile?.user) return;
+      if (!profile?.user) return; // Wait for profile to be loaded
       try {
-        const res = await axios.get(`http://localhost:4000/api/progress/${profile.user}/all`);
+        // Use configured API URL or default
+        const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+        const res = await axios.get(`${API_BASE}/api/progress/${profile.user}/all`);
         const pData = {};
-        res.data.progress.forEach(p => {
-          pData[p.course] = p; // Map by course ID
-        });
+        if (res.data.progress) {
+          res.data.progress.forEach(p => {
+            // Store by course ID string. Handle both populated object and direct ObjectId reference
+            const cId = p.course && p.course._id ? p.course._id.toString() : String(p.course);
+            pData[cId] = p;
+          });
+        }
         setProgressData(pData);
       } catch (err) {
         console.error("Error fetching dashboard progress", err);
       }
     };
-    fetchAllProgress();
-  }, [profile]);
+
+    // Fetch immediately if profile fits
+    if (profile?.user) {
+      fetchAllProgress();
+    }
+  }, [profile]); // dependence on profile ensures re-run if context updates profile object
 
   useEffect(() => {
     if (profile?.enrolledCourses) {
       // Map backend courses to dashboard structure
       const mappedEnrollments = profile.enrolledCourses.map(course => {
-        const courseProgress = progressData[course._id];
+        // Robust ID matching: Convert to string to avoid mismatch
+        const courseIdStr = typeof course._id === 'object' ? course._id.toString() : String(course._id);
+        const courseProgress = progressData[courseIdStr];
+
         let completionPercentage = 0;
         let isCompleted = false;
 
@@ -134,8 +140,13 @@ export default function LearnerDashboard() {
           }
 
           const completedCount = courseProgress.completedVideos?.length || 0;
+
           if (totalVideos > 0) {
-            completionPercentage = Math.round((completedCount / totalVideos) * 100);
+            // Prevent percentage > 100 which theoretically shouldn't happen but safe to cap
+            completionPercentage = Math.min(100, Math.round((completedCount / totalVideos) * 100));
+          } else if (isCompleted) {
+            // If no videos but marked complete (e.g. manually), show 100%
+            completionPercentage = 100;
           }
         }
 

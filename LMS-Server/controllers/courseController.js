@@ -157,18 +157,7 @@ exports.createCourse = async (req, res) => {
 
     const savedCourse = await newCourse.save();
 
-    const transaction = new Transaction({
-      type: "course_upload_reward",
-      to_user_id: profile._id,
-      course_id: savedCourse._id,
-      amount: UPLOAD_REWARD,
-      status: "completed",
-      validated_at: new Date(),
-    });
-    await transaction.save();
 
-    profile.bankBalance = (profile.bankBalance || 0) + UPLOAD_REWARD;
-    await profile.save();
 
     res.status(201).json(savedCourse);
   } catch (error) {
@@ -181,7 +170,7 @@ exports.createCourse = async (req, res) => {
 exports.getCourseById = async (req, res) => {
   try {
     const { id } = req.params;
-    let course = await Course.findById(id).populate('instructor_id', 'username email');
+    let course = await Course.findById(id).populate('instructor_id', 'username email fullName speciality profession skills bio');
 
     if (!course) {
       return res.status(404).json({ message: "Course not found" });
