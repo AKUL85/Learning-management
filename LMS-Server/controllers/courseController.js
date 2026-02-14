@@ -17,11 +17,18 @@ exports.getPublishedCourses = async (req, res) => {
 };
 
 
-const cleanupFiles = (files) => {
-  if (!files) return;
-  Object.values(files).flat().forEach(file => {
+// Helper to clean up temp files if something goes wrong during upload
+const cleanupFiles = (uploadedFiles) => {
+  if (!uploadedFiles) return;
+
+  // multer groups files by field name, so we flatten them to get a simple list
+  Object.values(uploadedFiles).flat().forEach(file => {
     if (file && file.path && fs.existsSync(file.path)) {
-      fs.unlinkSync(file.path);
+      try {
+        fs.unlinkSync(file.path);
+      } catch (err) {
+        console.warn(`Failed to cleanup file: ${file.path}`, err);
+      }
     }
   });
 };
@@ -48,55 +55,57 @@ exports.createCourse = async (req, res) => {
       return res.status(400).json({ message: "Title and price are required." });
     }
 
-    let thumbnailUrl = "";
-    let mainVideoUrl = "";
-    const materials = [];
+    let courseThumbnail = "";
+    let introVideo = "";
+    const materialsList = [];
 
     if (req.files) {
       if (req.files.image && req.files.image[0]) {
         try {
-          const img = await cloudinary.uploader.upload(req.files.image[0].path, {
+          const uploadedImg = await cloudinary.uploader.upload(req.files.image[0].path, {
             folder: "teaching_app/images",
           });
-          thumbnailUrl = img.secure_url;
-        } catch (e) {
-          console.error("Image upload failed:", e);
+          courseThumbnail = uploadedImg.secure_url;
+        } catch (err) {
+          console.error("Thumbnail upload failed:", err);
         }
       }
 
       if (req.files.video && req.files.video[0]) {
         try {
-          const vid = await cloudinary.uploader.upload(req.files.video[0].path, {
+          const uploadedVid = await cloudinary.uploader.upload(req.files.video[0].path, {
             folder: "teaching_app/videos",
             resource_type: "video",
           });
-          mainVideoUrl = vid.secure_url;
-        } catch (e) {
-          console.error("Video upload failed:", e);
+          introVideo = uploadedVid.secure_url;
+        } catch (err) {
+          console.error("Intro video upload failed:", err);
         }
       }
 
       if (req.files.materials) {
         for (const file of req.files.materials) {
           try {
-            const ext = file.originalname.split('.').pop().toLowerCase();
-            const isPdf = ext === 'pdf';
+            const fileExt = file.originalname.split('.').pop().toLowerCase();
+            const isPdf = fileExt === 'pdf';
+
             const uploadConfig = {
               folder: "teaching_app/materials",
               resource_type: isPdf ? "raw" : "auto"
             };
+
             const result = await cloudinary.uploader.upload(file.path, uploadConfig);
 
-            materials.push({
+            materialsList.push({
               id: result.public_id || Date.now().toString(),
               title: file.originalname,
-              type: ext,
+              type: fileExt,
               size: (file.size / (1024 * 1024)).toFixed(2) + " MB",
               url: result.secure_url,
               downloaded: false
             });
-          } catch (e) {
-            console.error("Material upload failed:", e);
+          } catch (err) {
+            console.error(`Failed to upload material: ${file.originalname}`, err);
           }
         }
       }
@@ -104,24 +113,24 @@ exports.createCourse = async (req, res) => {
 
     cleanupFiles(req.files);
 
-    let parsedMCQs = [];
-    let parsedCQs = [];
+    let mcqList = [];
+    let cqList = [];
     try {
-      if (mcqs) parsedMCQs = JSON.parse(mcqs);
-      if (cqs) parsedCQs = JSON.parse(cqs);
-    } catch (e) {
-      console.warn("JSON parse error for MCQs/CQs", e);
+      if (mcqs) mcqList = JSON.parse(mcqs);
+      if (cqs) cqList = JSON.parse(cqs);
+    } catch (err) {
+      console.warn("Could not parse MCQs or CQs structure", err);
     }
 
-    const content = [];
-    if (mainVideoUrl) {
-      content.push({
+    const courseContent = [];
+    if (introVideo) {
+      courseContent.push({
         section: "Introduction",
         videos: [
           {
             title: "Course Overview",
             duration: "0:00",
-            video_url: mainVideoUrl
+            video_url: introVideo
           }
         ]
       });
@@ -142,14 +151,13 @@ exports.createCourse = async (req, res) => {
       price: parseFloat(price),
       instructor_id: profile._id.toString(),
       instructor_name: profile.fullName,
-      thumbnail_url: thumbnailUrl,
-      thumbnail_url: thumbnailUrl,
+      thumbnail_url: courseThumbnail,
       published_at: null,
       duration_hours: 0,
-      materials,
-      content,
-      mcqs: parsedMCQs,
-      cqs: parsedCQs,
+      materials: materialsList,
+      content: courseContent,
+      mcqs: mcqList,
+      cqs: cqList,
       reviews: [],
       requirements: parsedRequirements,
       audience: parsedAudience
@@ -170,50 +178,52 @@ exports.createCourse = async (req, res) => {
 exports.getCourseById = async (req, res) => {
   try {
     const { id } = req.params;
+
+    // Grab the course and populate the instructor details we want to show
     let course = await Course.findById(id).populate('instructor_id', 'username email fullName speciality profession skills bio');
 
     if (!course) {
       return res.status(404).json({ message: "Course not found" });
     }
 
-    const userId = req.user ? req.user.userId : null;
-    let hasAccess = false;
+    const currentUserId = req.user ? req.user.userId : null;
+    let userHasAccess = false;
 
-    if (userId) {
-      const profile = await Profile.findOne({ user: userId });
-      if (profile) {
-        const isInstructor = course.instructor_id.toString() === profile._id.toString();
+    if (currentUserId) {
+      const userProfile = await Profile.findOne({ user: currentUserId });
+      if (userProfile) {
+        const isInstructor = course.instructor_id._id.toString() === userProfile._id.toString(); // Note: populated instructor_id is an object now
+        const isAdmin = userProfile.role === 'admin';
+        const isEnrolled = userProfile.enrolledCourses && userProfile.enrolledCourses.map(cid => cid.toString()).includes(course._id.toString());
 
-        if (isInstructor) {
-          hasAccess = true;
-        }
-        else if (profile.role === 'admin') {
-          hasAccess = true;
-        }
-        else if (profile.enrolledCourses.map(id => id.toString()).includes(course._id.toString())) {
-          hasAccess = true;
+        if (isInstructor || isAdmin || isEnrolled) {
+          userHasAccess = true;
         }
       }
     }
 
-    const courseData = course.toObject();
+    const coursePayload = course.toObject();
 
-    if (!hasAccess) {
-      if (courseData.content) {
-        courseData.content = courseData.content.map(section => ({
+    // If they don't have access, strip out the paid content
+    if (!userHasAccess) {
+      if (coursePayload.content) {
+        coursePayload.content = coursePayload.content.map(section => ({
           ...section,
           videos: section.videos.map(video => ({
             _id: video._id,
             title: video.title,
             isFree: video.isFree,
+            // URL is hidden
           }))
         }));
       }
-      courseData.materials = [];
-      courseData.mcqs = [];
-      courseData.cqs = [];
+      // Clear other protected data
+      coursePayload.materials = [];
+      coursePayload.mcqs = [];
+      coursePayload.cqs = [];
     }
 
+    // Get instructor stats for the side panel
     const instructorId = course.instructor_id._id;
 
     const totalCourses = await Course.countDocuments({ instructor_id: instructorId });
@@ -242,7 +252,7 @@ exports.getCourseById = async (req, res) => {
 
 
     res.json({
-      course: courseData,
+      course: coursePayload,
       instructorStats: {
         totalCourses,
         totalStudents,
@@ -301,6 +311,7 @@ const handleCourseUpdate = async (req, res) => {
       updates.thumbnail_url = thumbnail_url.trim();
     }
 
+    // Handle new Course Image upload
     if (req.files && req.files.image && req.files.image[0]) {
       try {
         const img = await cloudinary.uploader.upload(req.files.image[0].path, {
@@ -312,13 +323,16 @@ const handleCourseUpdate = async (req, res) => {
       }
     }
 
+    // Helper to safely parse JSON arrays from multipart form data
     const parseArray = (val) => {
       if (Array.isArray(val)) return val;
       if (isValidString(val)) {
         try {
           const parsed = JSON.parse(val);
           return Array.isArray(parsed) ? parsed : null;
-        } catch (e) { return null; }
+        } catch (e) {
+          return null;
+        }
       }
       return null;
     };
@@ -401,22 +415,26 @@ const handleCourseUpdate = async (req, res) => {
       // req.files.video is an array
       for (const file of req.files.video) {
         try {
-          const vid = await cloudinary.uploader.upload(file.path, {
+          const uploadedVid = await cloudinary.uploader.upload(file.path, {
             folder: "teaching_app/videos",
             resource_type: "video"
           });
 
+          // If we have a custom title for this specific file, use it
           const customTitle = parsedVideoTitles[file.originalname] || file.originalname.replace(/\.[^/.]+$/, "") || "New Lesson";
 
           newContentBlocks.push({
+            // Simply append to the end as a new module for now
             section: `Module ${course.content ? course.content.length + newContentBlocks.length + 1 : newContentBlocks.length + 1}`,
             videos: [{
               title: customTitle,
               duration: "0:00",
-              video_url: vid.secure_url
+              video_url: uploadedVid.secure_url
             }]
           });
-        } catch (e) { console.error("Vid upload fail", e); }
+        } catch (err) {
+          console.error(`Video upload failed for ${file.originalname}`, err);
+        }
       }
     }
 

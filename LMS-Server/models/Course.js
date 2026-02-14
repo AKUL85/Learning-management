@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
 
+// --- Sub-Schemas ---
+
 const MaterialSchema = new mongoose.Schema({
   id: { type: String, required: true },
   title: { type: String, required: true },
@@ -49,6 +51,7 @@ const QASchema = new mongoose.Schema({
   voters: [{ type: String }]
 }, { _id: true });
 
+// --- Main Course Schema ---
 const CourseSchema = new mongoose.Schema({
   title: { type: String, required: true },
   description: { type: String },
