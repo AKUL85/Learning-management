@@ -57,7 +57,7 @@ export default function HomePage() {
             const data = await res.json();
             setCourses(data.courses || []);
         } catch (error) {
-            showToast("Failed to load courses", "error");
+            showToast("Failed to load courses", error.message);
         } finally {
             setLoading(false);
         }
