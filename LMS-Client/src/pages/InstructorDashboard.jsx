@@ -289,7 +289,7 @@ export default function InstructorDashboard() {
       <Navbar />
       <Toast {...toast} onClose={() => setToastState(prev => ({ ...prev, isVisible: false }))} />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-12">
 
         {/* HEADER */}
         <InstructorHeader onOpenCreateModal={() => setShowCreateModal(true)} />

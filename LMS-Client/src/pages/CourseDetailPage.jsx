@@ -230,7 +230,7 @@ export default function CourseDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen bg-gray-900 pt-20">
       <Navbar />
       <Toast {...toast} onClose={() => setToastState(prev => ({ ...prev, isVisible: false }))} />
 

@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { BookOpen, User, Clock, Search, Zap, Star, MonitorPlay } from 'lucide-react';
 import Navbar from '../components/Navbar';
+import LoadingSpinner from '../components/ui/LoadingSpinner';
 
 const API_BASE = "http://localhost:4000/api/courses";
 
@@ -83,15 +84,7 @@ export default function HomePage() {
     };
 
     if (loading) {
-        return (
-            <div className="min-h-screen bg-[#0F172A] flex items-center justify-center relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-full bg-grid-white/[0.05] pointer-events-none" />
-                <div className="text-center relative z-10">
-                    <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-blue-400 font-mono animate-pulse">LOADING PLATFORM...</p>
-                </div>
-            </div>
-        );
+        return <LoadingSpinner message="Accessing course marketplace..." showNavbar={true} />;
     }
 
     return (

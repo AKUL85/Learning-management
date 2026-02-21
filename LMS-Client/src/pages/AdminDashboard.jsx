@@ -202,14 +202,7 @@ const AdminDashboard = () => {
         setUserDetail(null);
     };
 
-    if (loading) return (
-        <div className="min-h-screen bg-[#0F172A] flex items-center justify-center">
-            <div className="text-center">
-                <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                <p className="text-blue-400 animate-pulse">Loading Dashboard...</p>
-            </div>
-        </div>
-    );
+    if (loading) return <LoadingSpinner message="Loading Admin Command Center..." showNavbar={false} />;
 
     if (error) return <div className="p-10 text-center text-red-500">{error}</div>;
 
