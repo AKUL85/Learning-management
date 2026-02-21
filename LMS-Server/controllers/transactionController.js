@@ -54,7 +54,7 @@ exports.purchaseCourse = async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
-        const { userId, courseId } = req.body;
+        const { userId, courseId, bankSecret } = req.body;
 
         const course = await Course.findById(courseId).session(session);
         if (!course) throw new Error('Course not found');
@@ -63,6 +63,10 @@ exports.purchaseCourse = async (req, res) => {
 
         const profile = await Profile.findOne({ user: userId }).session(session);
         if (!profile) throw new Error('Profile not found');
+
+        if (!profile.bankSecret || profile.bankSecret !== bankSecret) {
+            throw new Error('Invalid bank credentials');
+        }
 
         if (profile.enrolledCourses && profile.enrolledCourses.includes(courseId)) {
             throw new Error('Already enrolled in this course');

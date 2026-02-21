@@ -34,7 +34,7 @@ exports.updateProgress = async (req, res) => {
             progress = new CourseProgress({ user: userId, course: courseId, completedVideos: [] });
         }
 
-        if (!progress.completedVideos.includes(videoId)) {
+        if (!progress.completedVideos.some(v => v.toString() === videoId)) {
             progress.completedVideos.push(videoId);
         }
 

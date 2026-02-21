@@ -2,7 +2,7 @@ const User = require('../models/User');
 const Profile = require('../models/Profile');
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_key';
+const JWT_SECRET = process.env.JWT_SECRET || '7d7613a2d5ecdd564ad84896920c0a4555823253ecf0053b8a94945abc2fa320';
 const JWT_EXPIRES_IN = '7d';
 
 
@@ -11,7 +11,7 @@ function createToken(userId) {
 }
 
 
-function setTokenCookie(res, token) {
+function setTokenCookie(res, token) {jwt
   res.cookie('token', token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',

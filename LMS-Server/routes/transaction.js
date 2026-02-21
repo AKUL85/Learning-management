@@ -1,4 +1,5 @@
 const express = require('express');
+// Routes for handling payments, wallet recharges, and course purchases
 const router = express.Router();
 const transactionController = require('../controllers/transactionController');
 

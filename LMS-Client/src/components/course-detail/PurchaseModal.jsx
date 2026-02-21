@@ -1,10 +1,12 @@
 // src/components/course-detail/PurchaseModal.jsx
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { CreditCard, AlertCircle } from 'lucide-react';
 
 export default function PurchaseModal({ course, profile, onConfirm, onClose, purchasing, onRecharge }) {
   const balance = profile?.bankBalance || profile?.bank_balance || 0;
   const sufficientFunds = balance >= course.price;
+  const [secretKey, setSecretKey] = useState(''); // Add state
 
   return (
     <motion.div
@@ -36,6 +38,22 @@ export default function PurchaseModal({ course, profile, onConfirm, onClose, pur
           </div>
         </div>
 
+        {sufficientFunds && (
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-400 mb-2">
+              Bank Secret Key
+            </label>
+            <input
+              type="password"
+              placeholder="Enter your bank secret key"
+              value={secretKey}
+              onChange={(e) => setSecretKey(e.target.value)}
+              className="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition-all"
+            />
+            <p className="text-xs text-gray-500 mt-2">Required for transaction verification</p>
+          </div>
+        )}
+
         {!sufficientFunds && (
           <div className="bg-red-900/20 border border-red-500/50 rounded-lg p-3 mb-6 flex items-start">
             <AlertCircle className="w-5 h-5 text-red-400 mr-2 flex-shrink-0 mt-0.5" />
@@ -53,7 +71,8 @@ export default function PurchaseModal({ course, profile, onConfirm, onClose, pur
 
           {sufficientFunds ? (
             <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-              onClick={onConfirm} disabled={purchasing}
+              onClick={() => onConfirm(secretKey)}
+              disabled={purchasing || !secretKey}
               className="flex-1 bg-cyan-500 text-gray-900 py-3 rounded-lg font-bold disabled:opacity-50">
               {purchasing ? 'Processing...' : 'Confirm Payment'}
             </motion.button>

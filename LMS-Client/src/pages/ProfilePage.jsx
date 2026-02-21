@@ -1,18 +1,54 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { User, Mail, Shield, Wallet, CreditCard, Lock, Save, Edit3, Camera } from 'lucide-react';
+import { User, Mail, Shield, Wallet, CreditCard, Lock, Save, Edit3, Camera, Star, Award } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
 import WalletModal from '../components/profile/WalletModal';
 
 export default function ProfilePage() {
     const { profile, refreshProfile } = useAuth();
+    const [isEditing, setIsEditing] = useState(false);
+    const [formData, setFormData] = useState({});
     const [showWalletModal, setShowWalletModal] = useState(false);
 
-    // Handlers for later implementation (Edit Profile, etc)
-    const handleSave = () => {
-        // Logic to update profile would go here
-        console.log("Saving profile...");
+    // Initialize form data when editing starts
+    const handleEditClick = () => {
+        setFormData({
+            fullName: profile.fullName,
+            speciality: profile.speciality || '',
+            profession: profile.profession || '',
+            bio: profile.bio || '',
+            skills: profile.skills ? profile.skills.join(', ') : ''
+        });
+        setIsEditing(true);
+    };
+
+    const handleSave = async () => {
+        try {
+            const updates = {
+                fullName: formData.fullName,
+                speciality: formData.speciality,
+                profession: formData.profession,
+                bio: formData.bio,
+                skills: formData.skills.split(',').map(s => s.trim()).filter(s => s)
+            };
+
+            const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+            const res = await fetch(`${API_BASE_URL}/profile/${profile.user._id || profile.user}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify(updates)
+            });
+
+            if (!res.ok) throw new Error('Failed to update profile');
+
+            await refreshProfile();
+            setIsEditing(false);
+        } catch (error) {
+            console.error("Save profile error:", error);
+            alert("Failed to save profile");
+        }
     };
 
     if (!profile) return null;
@@ -49,7 +85,7 @@ export default function ProfilePage() {
                         className="col-span-1"
                     >
                         <div className="bg-[#1E293B]/80 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 shadow-xl relative overflow-hidden group">
-                            <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                            <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
 
                             <div className="relative flex flex-col items-center text-center">
                                 <div className="w-32 h-32 rounded-full border-4 border-[#0F172A] shadow-2xl bg-gradient-to-br from-indigo-500 to-purple-600 p-[3px] mb-4 relative">
@@ -62,6 +98,7 @@ export default function ProfilePage() {
                                 </div>
 
                                 <h2 className="text-2xl font-bold text-white">{profile.fullName || profile.full_name}</h2>
+                                {profile.profession && <p className="text-cyan-400 font-medium">{profile.profession}</p>}
                                 <span className="inline-flex items-center px-3 py-1 mt-2 rounded-full text-xs font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 capitalize">
                                     {profile.role} Account
                                 </span>
@@ -99,42 +136,120 @@ export default function ProfilePage() {
                                     <Shield className="w-5 h-5 text-cyan-400 mr-2" />
                                     Personal Information
                                 </h3>
-                                <button className="text-sm text-cyan-400 hover:text-cyan-300 flex items-center transition-colors">
-                                    <Edit3 className="w-4 h-4 mr-1" /> Edit
-                                </button>
+                                {!isEditing ? (
+                                    <button onClick={handleEditClick} className="text-sm text-cyan-400 hover:text-cyan-300 flex items-center transition-colors">
+                                        <Edit3 className="w-4 h-4 mr-1" /> Edit
+                                    </button>
+                                ) : (
+                                    <div className="flex space-x-3">
+                                        <button onClick={() => setIsEditing(false)} className="text-sm text-gray-400 hover:text-white transition-colors">Cancel</button>
+                                        <button onClick={handleSave} className="text-sm bg-cyan-600 hover:bg-cyan-500 text-white px-3 py-1 rounded transition-colors flex items-center">
+                                            <Save className="w-3 h-3 mr-1" /> Save
+                                        </button>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium text-gray-400">Full Name</label>
-                                    <div className="flex items-center bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-3 text-white">
-                                        <User className="w-4 h-4 text-gray-500 mr-3" />
-                                        {profile.fullName || profile.full_name}
-                                    </div>
+                                    {isEditing ? (
+                                        <input
+                                            type="text"
+                                            value={formData.fullName}
+                                            onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                                            className="w-full bg-gray-900 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-500"
+                                        />
+                                    ) : (
+                                        <div className="flex items-center bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-3 text-white">
+                                            <User className="w-4 h-4 text-gray-500 mr-3" />
+                                            {profile.fullName || profile.full_name}
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium text-gray-400">Email Address</label>
-                                    <div className="flex items-center bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-3 text-white">
+                                    <div className="flex items-center bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-3 text-white opacity-60 cursor-not-allowed">
                                         <Mail className="w-4 h-4 text-gray-500 mr-3" />
-                                        {profile.email || "user@example.com" /* Assuming email is available in user obj or profile need to fetch */}
+                                        {profile.user?.email || profile.email || "user@example.com"}
                                     </div>
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-gray-400">Role</label>
-                                    <div className="flex items-center bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-3 text-white capitalize">
-                                        <Shield className="w-4 h-4 text-gray-500 mr-3" />
-                                        {profile.role}
-                                    </div>
+                                    <label className="text-sm font-medium text-gray-400">Profession</label>
+                                    {isEditing ? (
+                                        <input
+                                            type="text"
+                                            value={formData.profession}
+                                            onChange={(e) => setFormData({ ...formData, profession: e.target.value })}
+                                            placeholder="e.g. Software Engineer"
+                                            className="w-full bg-gray-900 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-500"
+                                        />
+                                    ) : (
+                                        <div className="flex items-center bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-3 text-white">
+                                            <Award className="w-4 h-4 text-gray-500 mr-3" />
+                                            {profile.profession || "Not set"}
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-gray-400">Member Since</label>
-                                    <div className="flex items-center bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-3 text-white">
-                                        <Clock className="w-4 h-4 text-gray-500 mr-3" />
-                                        {new Date(profile.createdAt || Date.now()).toLocaleDateString()}
-                                    </div>
+                                    <label className="text-sm font-medium text-gray-400">Speciality</label>
+                                    {isEditing ? (
+                                        <input
+                                            type="text"
+                                            value={formData.speciality}
+                                            onChange={(e) => setFormData({ ...formData, speciality: e.target.value })}
+                                            placeholder="e.g. Web Development"
+                                            className="w-full bg-gray-900 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-500"
+                                        />
+                                    ) : (
+                                        <div className="flex items-center bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-3 text-white">
+                                            <Star className="w-4 h-4 text-gray-500 mr-3" />
+                                            {profile.speciality || "Not set"}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="col-span-1 md:col-span-2 space-y-2">
+                                    <label className="text-sm font-medium text-gray-400">Bio</label>
+                                    {isEditing ? (
+                                        <textarea
+                                            value={formData.bio}
+                                            onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                                            placeholder="Tell us about yourself..."
+                                            rows="3"
+                                            className="w-full bg-gray-900 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-500"
+                                        />
+                                    ) : (
+                                        <div className="flex items-center bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-3 text-white">
+                                            <p className="text-sm">{profile.bio || "No bio provided"}</p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="col-span-1 md:col-span-2 space-y-2">
+                                    <label className="text-sm font-medium text-gray-400">Skills (comma separated)</label>
+                                    {isEditing ? (
+                                        <input
+                                            type="text"
+                                            value={formData.skills}
+                                            onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
+                                            placeholder="React, Node.js, Design..."
+                                            className="w-full bg-gray-900 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-500"
+                                        />
+                                    ) : (
+                                        <div className="flex items-center bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-3 text-white">
+                                            <div className="flex flex-wrap gap-2">
+                                                {profile.skills && profile.skills.length > 0 ? (
+                                                    profile.skills.map((skill, index) => (
+                                                        <span key={index} className="px-2 py-0.5 bg-gray-700 rounded text-xs text-gray-300">{skill}</span>
+                                                    ))
+                                                ) : <span className="text-gray-500">No skills listed</span>}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -164,12 +279,13 @@ export default function ProfilePage() {
                 isOpen={showWalletModal}
                 onClose={() => setShowWalletModal(false)}
                 balance={profile.bankBalance || profile.bank_balance || 0}
+                userId={profile.user?._id || profile.user}
                 onRecharge={async () => {
                     // Refresh profile to update balance after recharge
                     await refreshProfile();
                 }}
             />
-        </div>
+        </div >
     );
 }
 

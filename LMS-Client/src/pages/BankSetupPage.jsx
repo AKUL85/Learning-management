@@ -28,8 +28,8 @@ export default function BankSetupPage() {
 
     try {
       await updateProfile({
-        bank_account: bankAccount,
-        bank_secret: bankSecret,
+        bankAccount: bankAccount,
+        bankSecret: bankSecret,
       });
       toast.success('Bank information saved successfully!');
       navigate('/');
@@ -44,7 +44,7 @@ export default function BankSetupPage() {
     navigate('/');
   };
 
-  if (profile?.bank_account) {
+  if (profile?.bankAccount) {
     navigate('/');
     return null;
   }

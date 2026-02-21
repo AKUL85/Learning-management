@@ -2,7 +2,7 @@
 import { motion } from 'framer-motion';
 import { User, Star, Award, Users } from 'lucide-react';
 
-export default function InstructorCard({ instructor_name, instructor_bio, total_students = "15,000", total_courses = 5, rating = "4.8" }) {
+export default function InstructorCard({ instructor_name, instructor_bio, total_students = "15,000", total_courses = 5, rating = "4.8", profession, speciality, skills }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -23,9 +23,19 @@ export default function InstructorCard({ instructor_name, instructor_bio, total_
 
         <div className="flex-1">
           <h4 className="text-2xl font-bold text-white">{instructor_name}</h4>
-          <p className="text-gray-400 text-lg">Senior Cloud Architect & Instructor</p>
+          <p className="text-gray-400 text-lg">{profession || "Instructor"} {speciality && `• ${speciality}`}</p>
           {instructor_bio && (
             <p className="text-gray-300 mt-3 leading-relaxed">{instructor_bio}</p>
+          )}
+
+          {skills && skills.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-4">
+              {skills.map((skill, index) => (
+                <span key={index} className="px-3 py-1 bg-gray-700 text-cyan-300 text-xs rounded-full border border-cyan-900/30">
+                  {skill}
+                </span>
+              ))}
+            </div>
           )}
 
           {/* Stats */}
