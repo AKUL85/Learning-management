@@ -97,7 +97,7 @@ export default function InstructorDashboard() {
   }
 
   async function createCourse() {
-    if (!profile || !newCourse.title || !newCourse.description || !newCourse.price || !newCourse.image || !newCourse.video) {
+    if (!profile || !newCourse.title || !newCourse.description || !newCourse.price ) {
       showToast('Error: Please fill in all required fields.', 'error');
       return;
     }

@@ -94,7 +94,7 @@ export default function BankSetupPage() {
                     type="text"
                     value={bankAccount}
                     onChange={(e) => setBankAccount(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all"
+                    className="w-full text-black pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all"
                     placeholder="ACC123456789012"
                     required
                   />
@@ -122,7 +122,7 @@ export default function BankSetupPage() {
                     type="text"
                     value={bankSecret}
                     onChange={(e) => setBankSecret(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all"
+                    className="w-full text-black pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all"
                     placeholder="SECXXXXXXXXXXXXX"
                     required
                   />
@@ -143,7 +143,7 @@ export default function BankSetupPage() {
             </div>
 
             <div className="flex gap-4">
-              <motion.button
+              {/* <motion.button
                 type="button"
                 onClick={handleSkip}
                 whileHover={{ scale: 1.02 }}
@@ -151,7 +151,7 @@ export default function BankSetupPage() {
                 className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-xl font-medium hover:bg-gray-300 transition-colors"
               >
                 Skip for Now
-              </motion.button>
+              </motion.button> */}
 
               <motion.button
                 type="submit"
