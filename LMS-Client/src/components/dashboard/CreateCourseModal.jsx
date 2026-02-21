@@ -18,7 +18,7 @@ const CreateCourseModal = ({ isOpen, onClose, newCourse, setNewCourse, onSubmit 
                     className="bg-gray-800/90 backdrop-blur-md rounded-2xl p-8 max-w-3xl w-full border border-cyan-700 overflow-y-auto max-h-[90vh]"
                 >
                     <div className="flex justify-between items-center mb-6 border-b border-gray-700 pb-3">
-                        <h3 className="text-2xl font-bold text-cyan-400">DEPLOY NEW PROTOCOL</h3>
+                        <h3 className="text-2xl font-bold text-cyan-400">CREATE NEW COURSE</h3>
                         <motion.button
                             onClick={onClose}
                             className="p-2 bg-gray-700 hover:bg-red-500 rounded-full transition-colors"
@@ -31,7 +31,7 @@ const CreateCourseModal = ({ isOpen, onClose, newCourse, setNewCourse, onSubmit 
                     <div className="bg-green-900/40 border border-green-700 rounded-xl p-4 mb-6 shadow-inner">
                         <p className="text-sm text-green-300 flex items-center">
                             <Wallet className='w-4 h-4 mr-2' />
-                            Deployment reward:
+                            Creation reward:
                             <span className="font-bold ml-1 text-green-400">$500.00</span> will be credited instantly.
                         </p>
                     </div>
@@ -40,7 +40,7 @@ const CreateCourseModal = ({ isOpen, onClose, newCourse, setNewCourse, onSubmit 
 
                         {/* ---------------- TITLE ---------------- */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-400 mb-2">Protocol Title</label>
+                            <label className="block text-sm font-medium text-gray-400 mb-2">Course Title</label>
                             <input
                                 type="text"
                                 value={newCourse.title}
@@ -65,7 +65,7 @@ const CreateCourseModal = ({ isOpen, onClose, newCourse, setNewCourse, onSubmit 
 
                         {/* ---------------- PRICE ---------------- */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-400 mb-2">Acquisition Price ($)</label>
+                            <label className="block text-sm font-medium text-gray-400 mb-2">Course Price ($)</label>
                             <input
                                 type="number"
                                 step="0.01"
@@ -311,7 +311,7 @@ const CreateCourseModal = ({ isOpen, onClose, newCourse, setNewCourse, onSubmit 
                             className="w-full bg-cyan-500 text-gray-900 py-4 rounded-xl font-bold uppercase shadow-lg shadow-cyan-500/50 hover:bg-cyan-400 flex items-center justify-center"
                         >
                             <Upload className="w-5 h-5 mr-2" />
-                            CONFIRM DEPLOYMENT
+                            CREATE COURSE
                         </motion.button>
                     </div>
                 </motion.div>

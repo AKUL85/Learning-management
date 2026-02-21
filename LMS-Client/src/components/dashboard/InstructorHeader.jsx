@@ -9,8 +9,8 @@ const InstructorHeader = ({ onOpenCreateModal }) => {
             className="mb-8 flex justify-between items-center border-b border-gray-700 pb-4"
         >
             <div>
-                <h1 className="text-4xl font-extrabold text-white mb-2 tracking-wide">INSTRUCTOR CONSOLE</h1>
-                <p className="text-gray-500 font-light">Management interface for protocol deployment and revenue tracking.</p>
+                <h1 className="text-4xl font-extrabold text-white mb-2 tracking-wide">INSTRUCTOR DASHBOARD</h1>
+                <p className="text-gray-500 font-light">Manage your courses, track your earnings, and more.</p>
             </div>
             <motion.button
                 whileHover={{ scale: 1.05, boxShadow: "0 0 15px rgba(6, 182, 212, 0.5)" }}

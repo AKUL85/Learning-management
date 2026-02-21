@@ -239,7 +239,7 @@ const AdminDashboard = () => {
                     className="mb-10"
                 >
                     <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-cyan-400 to-purple-500 mb-2">
-                        Admin Command Center
+                        Admin Dashboard
                     </h1>
                     <p className="text-gray-400 text-lg">System Overview & Management</p>
                 </motion.div>
@@ -316,7 +316,7 @@ const AdminDashboard = () => {
                                                         <button
                                                             onClick={() => navigate(`/course/${course._id}`)}
                                                             className="flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all bg-blue-600/10 hover:bg-blue-600 text-blue-500 hover:text-white border border-blue-600/30"
-                                                            title="Inspect Content"
+                                                            title="View Content"
                                                         >
                                                             <Eye className="w-4 h-4" />
                                                             <span>View</span>
@@ -602,7 +602,7 @@ const UserTable = ({ users, onInspect, roleName, icon: Icon }) => (
                                     onClick={() => onInspect(user)}
                                     className="px-4 py-2 bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white rounded-lg text-sm font-medium transition-all"
                                 >
-                                    Inspect
+                                    View Details
                                 </button>
                             </td>
                         </tr>

@@ -90,7 +90,7 @@ export default function InstructorDashboard() {
       if (data.profile && refreshProfile) refreshProfile(data.profile);
     } catch (err) {
       console.error(err);
-      showToast('Error: Failed to synchronize data streams.', 'error');
+      showToast('Error: Failed to load dashboard data.', 'error');
     } finally {
       setLoading(false);
     }
@@ -98,7 +98,7 @@ export default function InstructorDashboard() {
 
   async function createCourse() {
     if (!profile || !newCourse.title || !newCourse.description || !newCourse.price || !newCourse.image || !newCourse.video) {
-      showToast('Error: Complete all required input fields.', 'error');
+      showToast('Error: Please fill in all required fields.', 'error');
       return;
     }
 
@@ -148,8 +148,8 @@ export default function InstructorDashboard() {
       }
 
       await Swal.fire({
-        title: 'Protocol Deployed!',
-        text: 'Reward of $500.00 confirmed. Your course is now pending validation.',
+        title: 'Course Created!',
+        text: 'Your course has been submitted successfully and is now pending approval. You have been rewarded $500.00!',
         icon: 'success',
         background: '#1e293b',
         color: '#fff',
@@ -175,8 +175,8 @@ export default function InstructorDashboard() {
     } catch (err) {
       console.error("Course creation error:", err);
       Swal.fire({
-        title: 'Deployment Failed',
-        text: err.message || "Error: Failed to deploy new protocol.",
+        title: 'Creation Failed',
+        text: err.message || "Error: Failed to create the new course.",
         icon: 'error',
         background: '#1e293b',
         color: '#fff',
@@ -198,14 +198,14 @@ export default function InstructorDashboard() {
       fetchData();
     } catch (err) {
       console.error(err);
-      showToast('Error: Failed to execute transaction validation.', 'error');
+      showToast('Error: Failed to validate the transaction.', 'error');
     }
   }
 
   async function handleDeleteCourse(courseId) {
     const result = await Swal.fire({
-      title: 'Terminate Protocol?',
-      text: "This action cannot be undone. The protocol will be scrubbed from the grid.",
+      title: 'Delete Course?',
+      text: "This action cannot be undone. This course will be permanently removed.",
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#ef4444',
@@ -226,7 +226,7 @@ export default function InstructorDashboard() {
 
         await Swal.fire({
           title: 'Deleted!',
-          text: 'Protocol scrubbed successfully.',
+          text: 'Course deleted successfully.',
           icon: 'success',
           background: '#1e293b',
           color: '#fff',
@@ -258,7 +258,7 @@ export default function InstructorDashboard() {
     labels: courses.map((c) => (c.title.length > 15 ? c.title.substring(0, 15) + '...' : c.title)),
     datasets: [
       {
-        label: 'Protocol Price ($)',
+        label: 'Course Price ($)',
         data: courses.map((c) => c.price),
         borderRadius: 8,
       },
@@ -266,7 +266,7 @@ export default function InstructorDashboard() {
   };
 
   const transactionData = {
-    labels: ['Upload Rewards', 'Student Acquisitions', 'Total Revenue'],
+    labels: ['Course Rewards', 'Student Enrollments', 'Total Revenue'],
     datasets: [
       {
         label: 'Earnings ($)',

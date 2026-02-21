@@ -27,7 +27,7 @@ const InstructorStats = ({ totalCourses, totalEarnings, pendingTransactionsCount
             <motion.div className="bg-gray-800 rounded-xl border-l-4 border-yellow-500 shadow-xl p-6">
                 <div className="flex items-center justify-between">
                     <div>
-                        <p className="text-gray-400 mb-1 uppercase text-sm">Pending Validation</p>
+                        <p className="text-gray-400 mb-1 uppercase text-sm">Pending Payouts</p>
                         <p className="text-4xl font-extrabold text-yellow-400 font-mono">{pendingTransactionsCount}</p>
                     </div>
                     <Clock className="w-8 h-8 text-yellow-500" />
@@ -37,7 +37,7 @@ const InstructorStats = ({ totalCourses, totalEarnings, pendingTransactionsCount
             <motion.div className="bg-gray-800 rounded-xl border-l-4 border-indigo-500 shadow-xl p-6">
                 <div className="flex items-center justify-between">
                     <div>
-                        <p className="text-gray-400 mb-1 uppercase text-sm">Total Audience</p>
+                        <p className="text-gray-400 mb-1 uppercase text-sm">Total Students</p>
                         <p className="text-4xl font-extrabold text-white font-mono">{totalAudience}</p>
                     </div>
                     <Users className="w-8 h-8 text-indigo-500" />

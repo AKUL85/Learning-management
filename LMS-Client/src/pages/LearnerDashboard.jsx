@@ -294,7 +294,7 @@ export default function LearnerDashboard() {
 
         {/* CARDS (Metric Widgets) */}
         <MetricCards
-          totalProtocols={enrollments.length}
+          totalCourses={enrollments.length}
           completedCount={completedCount}
           inProgressCount={inProgressCount}
         />

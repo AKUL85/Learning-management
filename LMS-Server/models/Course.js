@@ -57,7 +57,7 @@ const CourseSchema = new mongoose.Schema({
   description: { type: String },
   price: { type: Number, required: true },
   thumbnail_url: { type: String },
-  instructor_id: { type: String, required: true },
+  instructor_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Profile', required: true },
   instructor_name: { type: String },
   published_at: { type: Date },
   duration_hours: { type: Number },

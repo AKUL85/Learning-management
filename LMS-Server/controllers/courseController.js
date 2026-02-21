@@ -180,7 +180,11 @@ exports.getCourseById = async (req, res) => {
     const { id } = req.params;
 
     // Grab the course and populate the instructor details we want to show
-    let course = await Course.findById(id).populate('instructor_id', 'username email fullName speciality profession skills bio');
+    let course = await Course.findById(id).populate({
+      path: 'instructor_id',
+      select: 'fullName speciality profession skills bio user',
+      populate: { path: 'user', select: 'email' }
+    });
 
     if (!course) {
       return res.status(404).json({ message: "Course not found" });
@@ -283,7 +287,7 @@ const handleCourseUpdate = async (req, res) => {
       return res.status(404).json({ message: "Profile not found" });
     }
 
-    if (course.instructor_id !== profile._id.toString() && profile.role !== 'admin') {
+    if (course.instructor_id.toString() !== profile._id.toString() && profile.role !== 'admin') {
       cleanupFiles(req.files);
       return res.status(403).json({ message: "Forbidden: You do not own this course" });
     }
@@ -496,7 +500,7 @@ exports.deleteCourse = async (req, res) => {
     if (!course) return res.status(404).json({ message: "Course not found" });
 
     const profile = await Profile.findOne({ user: req.user.userId });
-    if (course.instructor_id !== profile._id.toString()) {
+    if (course.instructor_id.toString() !== profile._id.toString()) {
       return res.status(403).json({ message: "Forbidden" });
     }
 
@@ -576,7 +580,7 @@ exports.answerQuestion = async (req, res) => {
     if (!course) return res.status(404).json({ message: "Course not found" });
 
     const profile = await Profile.findOne({ user: userId });
-    if (course.instructor_id !== profile._id.toString()) {
+    if (course.instructor_id.toString() !== profile._id.toString()) {
       return res.status(403).json({ message: "Only the instructor can answer questions" });
     }
 

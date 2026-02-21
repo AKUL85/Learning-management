@@ -7,11 +7,11 @@ const InstructorCourseList = ({ courses, onOpenCreateModal, onDelete }) => {
 
     return (
         <motion.div className="bg-gray-800/80 backdrop-blur-md rounded-2xl p-6 border border-gray-700">
-            <h2 className="text-2xl font-bold text-white mb-6 border-b border-gray-700 pb-2">MY DEPLOYED PROTOCOLS</h2>
+            <h2 className="text-2xl font-bold text-white mb-6 border-b border-gray-700 pb-2">MY COURSES</h2>
             {courses.length === 0 ? (
                 <div className="text-center py-12">
                     <BookOpen className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                    <p className="text-gray-500 mb-4">No protocols are currently deployed to the grid.</p>
+                    <p className="text-gray-500 mb-4">You have not created any courses yet.</p>
                     <motion.button onClick={onOpenCreateModal} className="bg-cyan-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-cyan-700 transition inline-flex items-center shadow-lg">
                         <Plus className="w-5 h-5 mr-2" /> Create Your First Course
                     </motion.button>
@@ -30,7 +30,7 @@ const InstructorCourseList = ({ courses, onOpenCreateModal, onDelete }) => {
                                             <button
                                                 onClick={() => navigate(`/course/${course._id}`)}
                                                 className="p-1 hover:bg-gray-700 rounded transition-colors text-gray-400 hover:text-green-400"
-                                                title="View Protocol Details"
+                                                title="View Course Details"
                                             >
                                                 <Eye className="w-4 h-4" />
                                             </button>
@@ -39,7 +39,7 @@ const InstructorCourseList = ({ courses, onOpenCreateModal, onDelete }) => {
                                             <button
                                                 onClick={() => navigate(`/instructor/course/${course._id}/edit`)}
                                                 className="p-1 hover:bg-gray-700 rounded transition-colors text-gray-400 hover:text-cyan-400"
-                                                title="Edit Protocol"
+                                                title="Edit Course"
                                             >
                                                 <FileEdit className="w-4 h-4" />
                                             </button>
@@ -48,7 +48,7 @@ const InstructorCourseList = ({ courses, onOpenCreateModal, onDelete }) => {
                                             <button
                                                 onClick={() => onDelete(course._id)}
                                                 className="p-1 hover:bg-gray-700 rounded transition-colors text-gray-400 hover:text-red-500"
-                                                title="Delete Protocol"
+                                                title="Delete Course"
                                             >
                                                 <Trash className="w-4 h-4" />
                                             </button>

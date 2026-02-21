@@ -88,7 +88,7 @@ export default function HomePage() {
                 <div className="absolute top-0 left-0 w-full h-full bg-grid-white/[0.05] pointer-events-none" />
                 <div className="text-center relative z-10">
                     <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-blue-400 font-mono animate-pulse">INITIALIZING GRID...</p>
+                    <p className="text-blue-400 font-mono animate-pulse">LOADING PLATFORM...</p>
                 </div>
             </div>
         );
@@ -113,11 +113,11 @@ export default function HomePage() {
                     >
                         <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6">
                             <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-cyan-400 to-indigo-500 drop-shadow-[0_0_15px_rgba(56,189,248,0.5)]">
-                                KNOWLEDGE GRID
+                                COURSE MARKETPLACE
                             </span>
                         </h1>
                         <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-                            Access decentralized learning protocols. Upgrade your neural capacity with premium modules from elite instructors.
+                            Access a wide range of learning courses. Upskill your knowledge with premium courses from top-rated instructors.
                         </p>
 
                         {/* Search Bar */}
@@ -127,7 +127,7 @@ export default function HomePage() {
                                 <Search className="w-6 h-6 text-gray-400 ml-4" />
                                 <input
                                     type="text"
-                                    placeholder="Search protocols by title or instructor..."
+                                    placeholder="Search courses by title or instructor..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     className="w-full bg-transparent border-none text-white text-lg px-4 py-2 focus:ring-0 focus:outline-none placeholder-gray-500"
@@ -146,10 +146,10 @@ export default function HomePage() {
                 <div className="flex items-center justify-between mb-8">
                     <div className="flex items-center space-x-2">
                         <MonitorPlay className="w-5 h-5 text-blue-400" />
-                        <h2 className="text-xl font-bold text-white tracking-wide">AVAILABLE MODULES</h2>
+                        <h2 className="text-xl font-bold text-white tracking-wide">AVAILABLE COURSES</h2>
                     </div>
                     <span className="text-sm font-mono text-gray-500 bg-gray-900/50 px-3 py-1 rounded-full border border-gray-800">
-                        {filteredCourses.length} RAW_DATA_FOUND
+                        {filteredCourses.length} COURSES FOUND
                     </span>
                 </div>
 
@@ -161,7 +161,7 @@ export default function HomePage() {
                     >
                         <Search className="w-16 h-16 text-gray-700 mx-auto mb-4" />
                         <h3 className="text-xl text-gray-400 font-medium">No filtered results</h3>
-                        <p className="text-gray-600 mt-2">Try adjusting your query parameters.</p>
+                        <p className="text-gray-600 mt-2">Try adjusting your search query.</p>
                     </motion.div>
                 ) : (
                     <motion.div
@@ -220,10 +220,10 @@ export default function HomePage() {
                                     <div className="flex items-center justify-between pt-4 border-t border-gray-800">
                                         <div className="flex items-center text-gray-500 text-xs font-mono uppercase">
                                             <Clock className="w-3 h-3 mr-1" />
-                                            <span>Async Load</span>
+                                            <span>Self-paced</span>
                                         </div>
                                         <div className="flex items-center text-blue-400 text-xs font-semibold group-hover:translate-x-1 transition-transform">
-                                            ACCESS MODULE <Zap className="w-3 h-3 ml-1 fill-current" />
+                                            VIEW COURSE <Zap className="w-3 h-3 ml-1 fill-current" />
                                         </div>
                                     </div>
                                 </div>

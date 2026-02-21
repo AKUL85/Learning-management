@@ -34,7 +34,7 @@ const CourseItem = ({ enrollment, isExpanded, onToggle, materials }) => {
                     </h3>
                     <p className="text-sm text-gray-400 ml-7">{enrollment.course.description}</p>
                     <span className="text-xs text-gray-500 mt-1 block ml-7">
-                        Supervising Agent: {enrollment.course.instructor_name}
+                        Instructor: {enrollment.course.instructor_name}
                     </span>
                 </div>
 
@@ -42,7 +42,7 @@ const CourseItem = ({ enrollment, isExpanded, onToggle, materials }) => {
                 <div className="flex flex-wrap gap-3 items-center">
                     {/* Status Tag */}
                     <span className={`px-3 py-1 text-xs font-bold rounded-full ${enrollment.is_completed ? 'bg-green-600/30 text-green-300 border border-green-700 shadow-lg shadow-green-900/50' : 'bg-indigo-600/30 text-indigo-300 border border-indigo-700 shadow-lg shadow-indigo-900/50'}`}>
-                        {enrollment.is_completed ? 'PROTOCOL COMPLETE' : 'PROCESSING'}
+                        {enrollment.is_completed ? 'COURSE COMPLETED' : 'IN PROGRESS'}
                     </span>
 
                     {/* View Materials Button (Toggle) */}
@@ -52,7 +52,7 @@ const CourseItem = ({ enrollment, isExpanded, onToggle, materials }) => {
                         className={`flex items-center px-3 py-1.5 text-sm font-medium border rounded-lg transition ${isExpanded ? 'bg-cyan-600 text-white border-cyan-700' : 'bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600'}`}
                         onClick={onToggle}
                     >
-                        {isExpanded ? "Close Data Feed" : "Access Data Feed"}
+                        {isExpanded ? "Hide Content" : "View Content"}
                         {isExpanded ? <ChevronUp className="w-4 h-4 ml-1" /> : <ChevronDown className="w-4 h-4 ml-1" />}
                     </motion.button>
 
@@ -75,7 +75,7 @@ const CourseItem = ({ enrollment, isExpanded, onToggle, materials }) => {
                             className="bg-indigo-600 text-white px-3 py-1.5 text-sm font-medium rounded-lg flex items-center border border-indigo-700 shadow-md hover:bg-indigo-700 transition"
                         >
                             <Download className="mr-1 w-4 h-4" />
-                            Download Schema
+                            Download Certificate
                         </a>
                     )}
                 </div>
@@ -90,7 +90,7 @@ const CourseItem = ({ enrollment, isExpanded, onToggle, materials }) => {
                     transition={{ duration: 0.3 }}
                     className="mt-4 pt-4 border-t border-gray-700"
                 >
-                    <h4 className="font-semibold mb-3 text-cyan-400">Data Feed ({materials?.length || 0} Segments)</h4>
+                    <h4 className="font-semibold mb-3 text-cyan-400">Course Content ({materials?.length || 0} items)</h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                         {materials && materials.length > 0 ? materials.map((m) => (
                             <div key={m.id} className="flex items-center p-3 bg-gray-700 border border-gray-600 rounded-md text-sm text-gray-300 hover:bg-gray-600 transition cursor-pointer">
@@ -98,7 +98,7 @@ const CourseItem = ({ enrollment, isExpanded, onToggle, materials }) => {
                                 <p className="truncate font-mono">{m.title}</p>
                             </div>
                         )) : (
-                            <p className="text-gray-500 text-sm">No data segments available in the feed.</p>
+                            <p className="text-gray-500 text-sm">No content available in this course.</p>
                         )}
                     </div>
                 </motion.div>

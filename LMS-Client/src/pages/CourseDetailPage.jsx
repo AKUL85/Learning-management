@@ -172,7 +172,7 @@ export default function CourseDetailPage() {
     setPurchasing(true);
 
     try {
-      const res = await axios.post('/api/transaction/purchase', {
+      const res = await axios.post('/api/transactions/purchase', {
         userId: profile.user._id || profile.user,
         courseId: id,
         bankSecret: secretKey
