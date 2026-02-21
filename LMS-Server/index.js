@@ -28,27 +28,6 @@ const USERPASS = process.env.USERPASS;
 
 const MONGO_URI = `mongodb+srv://${USER_DB}:${USERPASS}@cluster0.rdbtijm.mongodb.net/TeachingManager?retryWrites=true&w=majority`;
 
-async function mongoPingTest() {
-  const client = new MongoClient(MONGO_URI, {
-    serverApi: {
-      version: ServerApiVersion.v1,
-      strict: true,
-      deprecationErrors: true,
-    }
-  });
-
-  try {
-    await client.connect();
-    await client.db("admin").command({ ping: 1 });
-    console.log("Ping successful: Connected to MongoDB Atlas!");
-  } catch (error) {
-    console.error("MongoDB Ping Error:", error);
-  } finally {
-    await client.close();
-  }
-}
-mongoPingTest();
-
 
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
