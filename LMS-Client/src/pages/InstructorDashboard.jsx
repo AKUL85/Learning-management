@@ -51,6 +51,7 @@ export default function InstructorDashboard() {
   const [transactions, setTransactions] = useState([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isCreatingCourse, setIsCreatingCourse] = useState(false);
   const { profile, refreshProfile } = useAuth();
   const { toast, showToast, setToastState } = useToast();
   const navigate = useNavigate();
@@ -102,6 +103,7 @@ export default function InstructorDashboard() {
       return;
     }
 
+    setIsCreatingCourse(true);
     try {
       const formData = new FormData();
       formData.append("title", newCourse.title);
@@ -182,6 +184,8 @@ export default function InstructorDashboard() {
         color: '#fff',
         confirmButtonColor: '#ef4444'
       });
+    } finally {
+      setIsCreatingCourse(false);
     }
   }
 
@@ -296,7 +300,7 @@ export default function InstructorDashboard() {
 
         {/* METRIC CARDS */}
         <InstructorStats
-          totalCourses={courses.length}
+          totalCourses={courses.filter(c => c.status === 'approved').length}
           totalEarnings={totalEarnings}
           pendingTransactionsCount={pendingTransactions.length}
           pendingCoursesCount={courses.filter(c => c.status === 'pending').length}
@@ -333,6 +337,7 @@ export default function InstructorDashboard() {
         newCourse={newCourse}
         setNewCourse={setNewCourse}
         onSubmit={createCourse}
+        isLoading={isCreatingCourse}
       />
 
     </div>

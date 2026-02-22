@@ -22,6 +22,7 @@ import {
     X,
     Eye
 } from 'lucide-react';
+import LoadingSpinner from '../components/ui/LoadingSpinner';
 
 const AdminDashboard = () => {
     const [activeTab, setActiveTab] = useState('overview');

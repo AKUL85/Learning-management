@@ -230,7 +230,7 @@ exports.getCourseById = async (req, res) => {
     // Get instructor stats for the side panel
     const instructorId = course.instructor_id._id;
 
-    const totalCourses = await Course.countDocuments({ instructor_id: instructorId });
+    const totalCourses = await Course.countDocuments({ instructor_id: instructorId, status: 'approved' });
 
     const instructorCourses = await Course.find({ instructor_id: instructorId }).select('_id');
     const instructorCourseIds = instructorCourses.map(c => c._id);

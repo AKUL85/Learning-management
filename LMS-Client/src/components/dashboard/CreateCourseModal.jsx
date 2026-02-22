@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Wallet, Upload } from 'lucide-react';
 
-const CreateCourseModal = ({ isOpen, onClose, newCourse, setNewCourse, onSubmit }) => {
+const CreateCourseModal = ({ isOpen, onClose, newCourse, setNewCourse, onSubmit, isLoading = false }) => {
     if (!isOpen) return null;
 
     return (
@@ -11,19 +11,24 @@ const CreateCourseModal = ({ isOpen, onClose, newCourse, setNewCourse, onSubmit 
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50"
-                onClick={onClose}
+                onClick={isLoading ? undefined : onClose}
             >
                 <motion.div
                     onClick={(e) => e.stopPropagation()}
-                    className="bg-gray-800/90 backdrop-blur-md rounded-2xl p-8 max-w-3xl w-full border border-cyan-700 overflow-y-auto max-h-[90vh]"
+                    className="relative bg-gray-800/90 backdrop-blur-md rounded-2xl p-8 max-w-3xl w-full border border-cyan-700 overflow-y-auto max-h-[90vh]"
                 >
                     <div className="flex justify-between items-center mb-6 border-b border-gray-700 pb-3">
                         <h3 className="text-2xl font-bold text-cyan-400">CREATE NEW COURSE</h3>
                         <motion.button
-                            onClick={onClose}
-                            className="p-2 bg-gray-700 hover:bg-red-500 rounded-full transition-colors"
+                            onClick={isLoading ? undefined : onClose}
+                            disabled={isLoading}
+                            className={`p-2 rounded-full transition-colors ${
+                                isLoading 
+                                    ? 'bg-gray-600 cursor-not-allowed' 
+                                    : 'bg-gray-700 hover:bg-red-500'
+                            }`}
                         >
-                            <X className="w-6 h-6 text-white" />
+                            <X className={`w-6 h-6 ${isLoading ? 'text-gray-400' : 'text-white'}`} />
                         </motion.button>
                     </div>
 
@@ -45,7 +50,10 @@ const CreateCourseModal = ({ isOpen, onClose, newCourse, setNewCourse, onSubmit 
                                 type="text"
                                 value={newCourse.title}
                                 onChange={(e) => setNewCourse({ ...newCourse, title: e.target.value })}
-                                className="w-full px-4 py-3 bg-transparent border-b border-gray-600 text-white focus:border-cyan-400 transition-all"
+                                disabled={isLoading}
+                                className={`w-full px-4 py-3 bg-transparent border-b border-gray-600 text-white focus:border-cyan-400 transition-all ${
+                                    isLoading ? 'opacity-60 cursor-not-allowed' : ''
+                                }`}
                                 placeholder="e.g., Quantum Computing Fundamentals"
                                 required
                             />
@@ -308,12 +316,86 @@ const CreateCourseModal = ({ isOpen, onClose, newCourse, setNewCourse, onSubmit 
                         {/* ---------------- SUBMIT ---------------- */}
                         <motion.button
                             onClick={onSubmit}
-                            className="w-full bg-cyan-500 text-gray-900 py-4 rounded-xl font-bold uppercase shadow-lg shadow-cyan-500/50 hover:bg-cyan-400 flex items-center justify-center"
+                            disabled={isLoading}
+                            className={`w-full py-4 rounded-xl font-bold uppercase shadow-lg flex items-center justify-center transition-all ${
+                                isLoading 
+                                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed shadow-gray-600/50' 
+                                    : 'bg-cyan-500 text-gray-900 hover:bg-cyan-400 shadow-cyan-500/50'
+                            }`}
                         >
-                            <Upload className="w-5 h-5 mr-2" />
-                            CREATE COURSE
+                            {isLoading ? (
+                                <>
+                                    <motion.div
+                                        animate={{ rotate: 360 }}
+                                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                                        className="w-5 h-5 mr-2"
+                                    >
+                                        <svg className="w-full h-full" viewBox="0 0 24 24" fill="none">
+                                            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" opacity="0.2" />
+                                            <path
+                                                d="M12 2a10 10 0 0 1 10 10"
+                                                stroke="currentColor"
+                                                strokeWidth="2"
+                                                strokeLinecap="round"
+                                            />
+                                        </svg>
+                                    </motion.div>
+                                    CREATING COURSE...
+                                </>
+                            ) : (
+                                <>
+                                    <Upload className="w-5 h-5 mr-2" />
+                                    CREATE COURSE
+                                </>
+                            )}
                         </motion.button>
                     </div>
+
+                    {/* Loading Overlay */}
+                    <AnimatePresence>
+                        {isLoading && (
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="absolute inset-0 bg-black/60 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center"
+                            >
+                                <motion.div
+                                    animate={{ rotate: 360 }}
+                                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                                    className="mb-4"
+                                >
+                                    <div className="relative w-16 h-16">
+                                        <svg className="w-full h-full" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                            <circle
+                                                cx="50"
+                                                cy="50"
+                                                r="45"
+                                                stroke="rgba(34, 211, 238, 0.2)"
+                                                strokeWidth="8"
+                                                fill="none"
+                                            />
+                                            <motion.circle
+                                                cx="50"
+                                                cy="50"
+                                                r="45"
+                                                stroke="#22d3ee"
+                                                strokeWidth="8"
+                                                fill="none"
+                                                strokeDasharray="283"
+                                                initial={{ strokeDashoffset: 283 }}
+                                                animate={{ strokeDashoffset: [283, 0, 283] }}
+                                                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                                                strokeLinecap="round"
+                                            />
+                                        </svg>
+                                    </div>
+                                </motion.div>
+                                <p className="text-cyan-400 font-semibold text-lg">Creating Your Course...</p>
+                                <p className="text-gray-400 text-sm mt-2">Please wait while we upload your course</p>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </motion.div>
             </motion.div>
         </AnimatePresence>

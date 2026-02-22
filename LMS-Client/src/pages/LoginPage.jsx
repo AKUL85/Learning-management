@@ -126,7 +126,7 @@ export default function LoginPage() {
                   Initializing...
                 </span>
               ) : (
-                'Execute Login Protocol'
+                'Login'
               )}
             </motion.button>
           </form>
