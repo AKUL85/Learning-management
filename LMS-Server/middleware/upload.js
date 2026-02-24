@@ -1,8 +1,16 @@
 const multer = require("multer");
 const path = require("path");
+const fs = require("fs");
+
+// Ensure the uploads directory exists
+const uploadsDir = path.join(__dirname, '..', 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
+    cb(null, uploadsDir);
   },
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
@@ -72,6 +80,6 @@ const upload = multer({
 
 exports.uploadCourseFiles = upload.fields([
   { name: "image", maxCount: 1 },
-  { name: "video", maxCount: 1 },
+  { name: "video", maxCount: 10 },
   { name: "materials", maxCount: 10 }
 ]);

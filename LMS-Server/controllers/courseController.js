@@ -6,6 +6,20 @@ const fs = require('fs');
 
 const UPLOAD_REWARD = 500;
 
+// Extract the Cloudinary public_id from a secure_url
+const extractPublicId = (url) => {
+  try {
+    // Cloudinary URLs look like: https://res.cloudinary.com/<cloud>/image/upload/v1234/folder/filename.ext
+    const parts = url.split('/upload/');
+    if (parts.length < 2) return null;
+    // Remove the version prefix (v1234/) and file extension
+    const pathAfterUpload = parts[1].replace(/^v\d+\//, '');
+    return pathAfterUpload.replace(/\.[^/.]+$/, '');
+  } catch (e) {
+    return null;
+  }
+};
+
 exports.getPublishedCourses = async (req, res) => {
   try {
     const courses = await Course.find({ status: 'approved' }).sort({ createdAt: -1 });
@@ -504,6 +518,40 @@ exports.deleteCourse = async (req, res) => {
       return res.status(403).json({ message: "Forbidden" });
     }
 
+    // Clean up Cloudinary resources
+    const destroyPromises = [];
+
+    // Delete thumbnail
+    if (course.thumbnail_url) {
+      const publicId = extractPublicId(course.thumbnail_url);
+      if (publicId) destroyPromises.push(cloudinary.uploader.destroy(publicId).catch(e => console.warn('Failed to delete thumbnail from Cloudinary:', e)));
+    }
+
+    // Delete videos from content sections
+    if (course.content) {
+      course.content.forEach(section => {
+        if (section.videos) {
+          section.videos.forEach(video => {
+            if (video.video_url) {
+              const publicId = extractPublicId(video.video_url);
+              if (publicId) destroyPromises.push(cloudinary.uploader.destroy(publicId, { resource_type: 'video' }).catch(e => console.warn('Failed to delete video from Cloudinary:', e)));
+            }
+          });
+        }
+      });
+    }
+
+    // Delete materials
+    if (course.materials) {
+      course.materials.forEach(mat => {
+        if (mat.id) {
+          const resourceType = mat.type === 'pdf' ? 'raw' : 'auto';
+          destroyPromises.push(cloudinary.uploader.destroy(mat.id, { resource_type: resourceType }).catch(e => console.warn('Failed to delete material from Cloudinary:', e)));
+        }
+      });
+    }
+
+    await Promise.all(destroyPromises);
     await Course.findByIdAndDelete(id);
 
     res.status(200).json({ message: "Course deleted successfully" });
