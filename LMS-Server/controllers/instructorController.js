@@ -3,7 +3,14 @@ const Course = require('../models/Course');
 const Transaction = require('../models/Transaction');
 const cloudinary = require("../config/cloudinary");
 const fs = require('fs');
+const path = require('path');
 const UPLOAD_REWARD = 500;
+
+// Persistent directory for course materials
+const materialsDir = path.join(__dirname, '..', 'uploads', 'materials');
+if (!fs.existsSync(materialsDir)) {
+  fs.mkdirSync(materialsDir, { recursive: true });
+}
 
 // Helper to clean up temp files after upload
 const cleanupFiles = (files) => {
@@ -85,25 +92,22 @@ exports.createCourse = async (req, res) => {
     for (const file of materialFiles) {
       try {
         const ext = file.originalname.split('.').pop().toLowerCase();
-        const isPdf = ext === 'pdf';
 
-        const uploadConfig = {
-          folder: "teaching_app/materials",
-          resource_type: isPdf ? "raw" : "auto"
-        };
-
-        const result = await cloudinary.uploader.upload(file.path, uploadConfig);
+        // Store materials locally instead of Cloudinary (raw file CDN delivery is blocked)
+        const uniqueName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${ext}`;
+        const destPath = path.join(materialsDir, uniqueName);
+        fs.renameSync(file.path, destPath);
 
         materials.push({
-          id: result.public_id || Date.now().toString(),
+          id: uniqueName,
           title: file.originalname,
           type: ext,
           size: (file.size / (1024 * 1024)).toFixed(2) + " MB",
-          url: result.secure_url,
+          url: `/api/courses/materials/${uniqueName}/download`,
           downloaded: false
         });
       } catch (uploadError) {
-        console.error("Material upload error:", uploadError);
+        console.error("Material storage error:", uploadError);
       }
     }
 
@@ -134,9 +138,6 @@ exports.createCourse = async (req, res) => {
     });
 
     await course.save();
-
-    // Clean up temp files after successful upload
-    cleanupFiles(req.files);
 
     // Clean up temp files after successful upload
     cleanupFiles(req.files);

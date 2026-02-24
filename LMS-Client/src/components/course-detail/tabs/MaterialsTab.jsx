@@ -1,6 +1,9 @@
 // src/components/course-detail/tabs/MaterialsTab.jsx
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Download, FileText, File, Video, Music, Image, Archive, CheckCircle } from 'lucide-react';
+import { Download, FileText, File, Video, Music, Image, Archive, CheckCircle, Loader2 } from 'lucide-react';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 
 const getFileIcon = (type) => {
   switch (type) {
@@ -16,7 +19,42 @@ const getFileIcon = (type) => {
 
 const MaterialItem = ({ material }) => {
   const { title, type, size, url, downloaded } = material;
-    console.log(material)
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownload = async (e) => {
+    e.preventDefault();
+    if (!url || downloading) return;
+
+    setDownloading(true);
+    try {
+      // Build the full download URL — url is a server API path like /api/courses/materials/:filename/download
+      const downloadUrl = url.startsWith('http') ? url : `${API_URL}${url}`;
+
+      const response = await fetch(downloadUrl, {
+        credentials: 'include'
+      });
+
+      if (!response.ok) throw new Error('Download failed');
+
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = title || 'download';
+      document.body.appendChild(link);
+      link.click();
+
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      console.error('Download error:', err);
+      alert('Failed to download file. Please try again.');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   return (
     <motion.div
       whileHover={{ scale: 1.02, boxShadow: "0 10px 20px rgba(6, 182, 212, 0.15)" }}
@@ -27,7 +65,6 @@ const MaterialItem = ({ material }) => {
         <div>
           <h4 className="font-medium text-white truncate max-w-[300px]">{title}</h4>
           <p className="text-sm text-gray-400">{size} • {(type || '').toUpperCase()}</p>
-
         </div>
       </div>
 
@@ -39,14 +76,14 @@ const MaterialItem = ({ material }) => {
           </div>
         ) : null}
 
-        <a
-          href={url}
-          download
-          className="bg-cyan-500 hover:bg-cyan-400 text-gray-900 px-6 py-2 rounded-lg font-medium flex items-center space-x-2 transition"
+        <button
+          onClick={handleDownload}
+          disabled={downloading}
+          className="bg-cyan-500 hover:bg-cyan-400 disabled:bg-cyan-700 disabled:cursor-wait text-gray-900 px-6 py-2 rounded-lg font-medium flex items-center space-x-2 transition"
         >
-          <Download className="w-5 h-5" />
-          <span>Download</span>
-        </a>
+          {downloading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
+          <span>{downloading ? 'Downloading...' : 'Download'}</span>
+        </button>
       </div>
     </motion.div>
   );

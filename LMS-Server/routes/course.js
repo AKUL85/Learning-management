@@ -18,6 +18,9 @@ router.patch('/:id', auth, uploadCourseFiles, courseController.partialUpdateCour
 
 router.delete('/:id', auth, courseController.deleteCourse);
 
+// Material download (authenticated)
+router.get('/materials/:filename/download', auth, courseController.downloadMaterial);
+
 router.post('/:id/reviews', auth, courseController.addReview);
 
 router.post('/:id/qa', auth, courseController.addQuestion);

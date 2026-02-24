@@ -3,6 +3,13 @@ const Profile = require('../models/Profile');
 const Transaction = require('../models/Transaction');
 const cloudinary = require("../config/cloudinary");
 const fs = require('fs');
+const path = require('path');
+
+// Persistent directory for course materials (not cleaned up after upload)
+const materialsDir = path.join(__dirname, '..', 'uploads', 'materials');
+if (!fs.existsSync(materialsDir)) {
+  fs.mkdirSync(materialsDir, { recursive: true });
+}
 
 const UPLOAD_REWARD = 500;
 
@@ -101,25 +108,22 @@ exports.createCourse = async (req, res) => {
         for (const file of req.files.materials) {
           try {
             const fileExt = file.originalname.split('.').pop().toLowerCase();
-            const isPdf = fileExt === 'pdf';
 
-            const uploadConfig = {
-              folder: "teaching_app/materials",
-              resource_type: isPdf ? "raw" : "auto"
-            };
-
-            const result = await cloudinary.uploader.upload(file.path, uploadConfig);
+            // Store materials locally instead of Cloudinary (raw file CDN delivery is blocked)
+            const uniqueName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+            const destPath = path.join(materialsDir, uniqueName);
+            fs.renameSync(file.path, destPath);
 
             materialsList.push({
-              id: result.public_id || Date.now().toString(),
+              id: uniqueName,
               title: file.originalname,
               type: fileExt,
               size: (file.size / (1024 * 1024)).toFixed(2) + " MB",
-              url: result.secure_url,
+              url: `/api/courses/materials/${uniqueName}/download`,
               downloaded: false
             });
           } catch (err) {
-            console.error(`Failed to upload material: ${file.originalname}`, err);
+            console.error(`Failed to store material: ${file.originalname}`, err);
           }
         }
       }
@@ -395,25 +399,23 @@ const handleCourseUpdate = async (req, res) => {
       for (const file of req.files.materials) {
         try {
           const ext = file.originalname.split('.').pop().toLowerCase();
-          const isPdf = ext === 'pdf';
-          const uploadConfig = {
-            folder: "teaching_app/materials",
-            resource_type: isPdf ? "raw" : "auto"
-          };
-          const result = await cloudinary.uploader.upload(file.path, uploadConfig);
 
-          // Use custom title if available, else filename
+          // Store materials locally instead of Cloudinary
+          const uniqueName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${ext}`;
+          const destPath = path.join(materialsDir, uniqueName);
+          fs.renameSync(file.path, destPath);
+
           const fileTitle = parsedMaterialTitles[file.originalname] || file.originalname;
 
           newMaterialFiles.push({
-            id: result.public_id || Date.now().toString(),
+            id: uniqueName,
             title: fileTitle,
             type: ext,
             size: (file.size / (1024 * 1024)).toFixed(2) + " MB",
-            url: result.secure_url,
+            url: `/api/courses/materials/${uniqueName}/download`,
             downloaded: false
           });
-        } catch (e) { console.error("Mat upload fail", e); }
+        } catch (e) { console.error("Mat storage fail", e); }
       }
     }
 
@@ -541,12 +543,14 @@ exports.deleteCourse = async (req, res) => {
       });
     }
 
-    // Delete materials
+    // Delete materials (stored locally)
     if (course.materials) {
       course.materials.forEach(mat => {
         if (mat.id) {
-          const resourceType = mat.type === 'pdf' ? 'raw' : 'auto';
-          destroyPromises.push(cloudinary.uploader.destroy(mat.id, { resource_type: resourceType }).catch(e => console.warn('Failed to delete material from Cloudinary:', e)));
+          const filePath = path.join(materialsDir, mat.id);
+          if (fs.existsSync(filePath)) {
+            try { fs.unlinkSync(filePath); } catch (e) { console.warn('Failed to delete local material:', e); }
+          }
         }
       });
     }
@@ -642,5 +646,33 @@ exports.answerQuestion = async (req, res) => {
   } catch (error) {
     console.error("Error answering question:", error);
     res.status(500).json({ message: "Error answering question" });
+  }
+};
+
+exports.downloadMaterial = async (req, res) => {
+  try {
+    const { filename } = req.params;
+
+    if (!filename) {
+      return res.status(400).json({ message: "Filename is required" });
+    }
+
+    // Prevent directory traversal attacks
+    const safeName = path.basename(filename);
+    const filePath = path.join(materialsDir, safeName);
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ message: "File not found" });
+    }
+
+    // Look up the original filename from any course that has this material
+    const course = await Course.findOne({ 'materials.id': safeName });
+    const material = course?.materials?.find(m => m.id === safeName);
+    const downloadName = material?.title || safeName;
+
+    res.download(filePath, downloadName);
+  } catch (error) {
+    console.error("Error downloading material:", error);
+    res.status(500).json({ message: "Error downloading material" });
   }
 };
