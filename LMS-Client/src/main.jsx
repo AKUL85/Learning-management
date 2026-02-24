@@ -29,11 +29,11 @@ import ProfilePage from "./pages/ProfilePage";
 
 // Wrapper component to use hooks inside router config
 function AppWrapper({ element }) {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
 
   return (
     <>
-      {typeof element === "function" ? element(user) : element}
+      {typeof element === "function" ? element({ user, profile }) : element}
       <ToastContainer
         position="top-right"
         autoClose={3000}
@@ -55,7 +55,7 @@ const router = createBrowserRouter([
     path: "/login",
     element: (
       <AppWrapper
-        element={(user) =>
+        element={({ user }) =>
           user ? <Navigate to="/" replace /> : <LoginPage />
         }
       />
@@ -65,8 +65,10 @@ const router = createBrowserRouter([
     path: "/register",
     element: (
       <AppWrapper
-        element={(user) =>
-          user ? <Navigate to="/" replace /> : <RegisterPage />
+        element={({ user, profile }) =>
+          user
+            ? <Navigate to={profile?.bankAccount ? "/" : "/bank-setup"} replace />
+            : <RegisterPage />
         }
       />
     ),

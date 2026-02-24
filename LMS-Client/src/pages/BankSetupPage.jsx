@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -44,10 +44,11 @@ export default function BankSetupPage() {
     navigate('/');
   };
 
-  if (profile?.bankAccount) {
-    navigate('/');
-    return null;
-  }
+  useEffect(() => {
+    if (profile?.bankAccount) {
+      navigate('/', { replace: true });
+    }
+  }, [profile, navigate]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-white to-yellow-50 flex items-center justify-center p-4">
@@ -104,7 +105,7 @@ export default function BankSetupPage() {
                   onClick={generateRandomAccount}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-xl text-sm font-medium transition-colors"
+                  className="px-4 py-3 bg-blue-400 hover:bg-gray-200 rounded-xl hover:text-black text-sm font-medium transition-colors"
                 >
                   Generate
                 </motion.button>
@@ -132,7 +133,7 @@ export default function BankSetupPage() {
                   onClick={generateRandomSecret}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-xl text-sm font-medium transition-colors"
+                  className="px-4 py-3 bg-blue-400 hover:bg-gray-200 rounded-xl hover:text-black text-sm font-medium transition-colors"
                 >
                   Generate
                 </motion.button>

@@ -158,8 +158,13 @@ export default function CourseDetailPage() {
     }
   };
 
-  const handlePurchase = async () => {
+  const handlePurchase = async (secretKey) => {
     if (!profile || !course) return;
+
+    if (!secretKey) {
+      showToast('Please enter your bank secret key.', 'error');
+      return;
+    }
 
     // Check balance
     if ((profile.bankBalance || profile.bank_balance || 0) < course.price) {
@@ -313,6 +318,7 @@ export default function CourseDetailPage() {
             isOpen={showWalletModal}
             onClose={() => setShowWalletModal(false)}
             balance={profile?.bankBalance || profile?.bank_balance || 0}
+            userId={profile?.user?._id || profile?.user}
             onRecharge={(newBalance) => {
               if (refreshProfile) refreshProfile();
             }}
