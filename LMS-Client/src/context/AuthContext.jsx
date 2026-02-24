@@ -41,9 +41,11 @@ export const AuthProvider = ({ children }) => {
       role
     });
 
-    setUser(res.data.user);
-
     const profileRes = await axios.get(`/api/profile/${res.data.user._id}`);
+
+    // Set both in the same synchronous block so React batches them
+    // and the register route guard doesn't fire prematurely
+    setUser(res.data.user);
     setProfile(profileRes.data.profile);
   };
 

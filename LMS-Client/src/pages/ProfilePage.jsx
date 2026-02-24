@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { User, Mail, Shield, Wallet, CreditCard, Lock, Save, Edit3, Camera, Star, Award } from 'lucide-react';
+import { User, Mail, Shield, Wallet, CreditCard, Lock, Save, Edit3, Camera, Star, Award, Copy, Key, Check } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
 import WalletModal from '../components/profile/WalletModal';
@@ -10,6 +10,16 @@ export default function ProfilePage() {
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({});
     const [showWalletModal, setShowWalletModal] = useState(false);
+    const [copiedSecret, setCopiedSecret] = useState(false);
+
+    const handleCopySecret = () => {
+        const secret = profile.bankSecret || profile.bank_secret;
+        if (secret) {
+            navigator.clipboard.writeText(secret);
+            setCopiedSecret(true);
+            setTimeout(() => setCopiedSecret(false), 2000);
+        }
+    };
 
     // Initialize form data when editing starts
     const handleEditClick = () => {
@@ -117,6 +127,31 @@ export default function ProfilePage() {
                                     >
                                         Recharge
                                     </button>
+                                </div>
+
+                                <div className="flex items-center p-3 rounded-xl bg-gray-800/50 border border-gray-700/50">
+                                    <CreditCard className="w-5 h-5 text-cyan-400 mr-3" />
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs text-gray-400 uppercase font-semibold">Account Number</p>
+                                        <p className="text-sm font-mono text-white truncate">{profile.bankAccount || profile.bank_account || 'Not set'}</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center p-3 rounded-xl bg-gray-800/50 border border-gray-700/50">
+                                    <Key className="w-5 h-5 text-amber-400 mr-3" />
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs text-gray-400 uppercase font-semibold">Secret Key</p>
+                                        <p className="text-sm font-mono text-white truncate">{profile.bankSecret || profile.bank_secret || 'Not set'}</p>
+                                    </div>
+                                    {(profile.bankSecret || profile.bank_secret) && (
+                                        <button
+                                            onClick={handleCopySecret}
+                                            className="ml-2 p-2 rounded-lg hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
+                                            title="Copy secret key"
+                                        >
+                                            {copiedSecret ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         </div>
