@@ -20,7 +20,7 @@ export default function PurchaseCard({ course, isEnrolled, onPurchase, onGoToCou
           <img src={course.thumbnail_url} alt={course.title} className="w-full h-48 object-cover" />
           <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
             <button className="bg-white text-gray-900 px-6 py-3 rounded-lg font-bold flex items-center space-x-2 hover:bg-gray-100">
-              <Play className="w-5 h-5" /><span>Preview this course</span>
+              <Play className="w-5 h-5" /><span>Access this course</span>
             </button>
           </div>
         </div>
@@ -45,7 +45,7 @@ export default function PurchaseCard({ course, isEnrolled, onPurchase, onGoToCou
             <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
               onClick={onPurchase}
               className="w-full bg-cyan-500 text-gray-900 py-4 rounded-xl font-bold uppercase flex items-center justify-center mb-4">
-              <ShoppingCart className="w-5 h-5 mr-2" /> Add to cart
+              <ShoppingCart className="w-5 h-5 mr-2" /> Enroll
             </motion.button>
           )
         ) : profile?.role === 'instructor' ? (
@@ -75,14 +75,7 @@ export default function PurchaseCard({ course, isEnrolled, onPurchase, onGoToCou
           <p className="text-gray-400 text-sm mb-4">30-Day Money-Back Guarantee</p>
         </div>
 
-        <div className="space-y-4 mb-6">
-          <button className="w-full border border-gray-600 text-white py-3 rounded-lg flex items-center justify-center hover:bg-gray-700/50">
-            <Bookmark className="w-5 h-5 mr-2" /> Wishlist
-          </button>
-          <button className="w-full border border-gray-600 text-white py-3 rounded-lg flex items-center justify-center hover:bg-gray-700/50">
-            <Share2 className="w-5 h-5 mr-2" /> Share
-          </button>
-        </div>
+       
 
         <div className="pt-6 border-t border-gray-700">
           <h4 className="font-bold text-white mb-4">This course includes:</h4>
