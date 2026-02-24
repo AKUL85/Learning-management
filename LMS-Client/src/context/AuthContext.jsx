@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import axios from "axios";
 
-// 🔥 FIX: Always call backend at http://localhost:4000
+//  FIX: Always call backend at http://localhost:4000
 axios.defaults.baseURL = "http://localhost:4000";
 axios.defaults.withCredentials = true;
 
