@@ -110,7 +110,7 @@ export default function RegisterPage() {
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   className="w-full pl-8 pr-4 py-3 bg-transparent border-b border-gray-600 text-white placeholder-gray-500 focus:border-cyan-400 focus:outline-none transition-all"
-                  placeholder="Designation Name"
+                  placeholder="Your Name"
                   required
                 />
               </div>
@@ -125,7 +125,7 @@ export default function RegisterPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full pl-8 pr-4 py-3 bg-transparent border-b border-gray-600 text-white placeholder-gray-500 focus:border-cyan-400 focus:outline-none transition-all"
-                  placeholder="Secure Gmail Id"
+                  placeholder="Email "
                   required
                 />
               </div>
@@ -140,7 +140,7 @@ export default function RegisterPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full pl-8 pr-4 py-3 bg-transparent border-b border-gray-600 text-white placeholder-gray-500 focus:border-cyan-400 focus:outline-none transition-all"
-                  placeholder="Access Password (Min 6 chars)"
+                  placeholder="Password (Min 6 chars)"
                   required
                   minLength={6}
                 />
@@ -185,7 +185,7 @@ export default function RegisterPage() {
                   Processing Enrollment...
                 </span>
               ) : (
-                'Initiate Account Creation'
+                'Register'
               )}
             </motion.button>
           </form>
