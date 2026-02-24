@@ -2,23 +2,41 @@ const Profile = require('../models/Profile');
 const Course = require('../models/Course');
 const Transaction = require('../models/Transaction');
 const cloudinary = require("../config/cloudinary");
+const fs = require('fs');
 const UPLOAD_REWARD = 500;
+
+// Helper to clean up temp files after upload
+const cleanupFiles = (files) => {
+  if (!files) return;
+  Object.values(files).flat().forEach(file => {
+    if (file && file.path && fs.existsSync(file.path)) {
+      try { fs.unlinkSync(file.path); } catch (err) { console.warn(`Cleanup failed: ${file.path}`, err); }
+    }
+  });
+};
 
 exports.createCourse = async (req, res) => {
   try {
     if (!req.user) return res.status(401).json({ message: "Unauthorized" });
     const profile = await Profile.findOne({ user: req.user.userId });
-    if (!profile) return res.status(404).json({ message: "Profile not found" });
-    if (profile.role !== "instructor")
+    if (!profile) {
+      cleanupFiles(req.files);
+      return res.status(404).json({ message: "Profile not found" });
+    }
+    if (profile.role !== "instructor") {
+      cleanupFiles(req.files);
       return res.status(403).json({ message: "Forbidden" });
+    }
 
     const { title, description, price, mcqs, cqs } = req.body;
 
     if (!title || !description || !price) {
+      cleanupFiles(req.files);
       return res.status(400).json({ message: "Title, description, and price are required" });
     }
 
     if (!req.files || !req.files.image || !req.files.video) {
+      cleanupFiles(req.files);
       return res.status(400).json({ message: "Image and video files are required" });
     }
 
@@ -30,6 +48,7 @@ exports.createCourse = async (req, res) => {
       if (cqs) parsedCQs = JSON.parse(cqs);
     } catch (error) {
       console.error("Error parsing JSON data:", error);
+      cleanupFiles(req.files);
       return res.status(400).json({ message: "Invalid JSON format for MCQs or CQs" });
     }
 
@@ -42,6 +61,7 @@ exports.createCourse = async (req, res) => {
       thumbnailUrl = img.secure_url;
     } catch (uploadError) {
       console.error("Image upload error:", uploadError);
+      cleanupFiles(req.files);
       return res.status(500).json({ message: "Failed to upload image" });
     }
 
@@ -55,6 +75,7 @@ exports.createCourse = async (req, res) => {
       videoUrl = vid.secure_url;
     } catch (uploadError) {
       console.error("Video upload error:", uploadError);
+      cleanupFiles(req.files);
       return res.status(500).json({ message: "Failed to upload video" });
     }
 
@@ -65,29 +86,38 @@ exports.createCourse = async (req, res) => {
       try {
         const ext = file.originalname.split('.').pop().toLowerCase();
         const isPdf = ext === 'pdf';
-        const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
 
         const uploadConfig = {
           folder: "teaching_app/materials",
-          resource_type: "auto"
+          resource_type: isPdf ? "raw" : "auto"
         };
-
-        if (isPdf) {
-          uploadConfig.resource_type = "raw";
-        }
 
         const result = await cloudinary.uploader.upload(file.path, uploadConfig);
 
         materials.push({
-          filename: file.filename,
+          id: result.public_id || Date.now().toString(),
+          title: file.originalname,
+          type: ext,
+          size: (file.size / (1024 * 1024)).toFixed(2) + " MB",
           url: result.secure_url,
-          originalname: file.originalname,
-          size: file.size,
-          public_id: result.public_id
+          downloaded: false
         });
       } catch (uploadError) {
         console.error("Material upload error:", uploadError);
       }
+    }
+
+    // Build content array with the intro video
+    const courseContent = [];
+    if (videoUrl) {
+      courseContent.push({
+        section: "Introduction",
+        videos: [{
+          title: "Course Overview",
+          duration: "0:00",
+          video_url: videoUrl
+        }]
+      });
     }
 
     const course = new Course({
@@ -97,14 +127,19 @@ exports.createCourse = async (req, res) => {
       instructor_id: profile._id,
       instructor_name: profile.fullName,
       thumbnail_url: thumbnailUrl,
-      video_url: videoUrl,
       materials,
+      content: courseContent,
       mcqs: parsedMCQs,
       cqs: parsedCQs,
-      is_published: true,
     });
 
     await course.save();
+
+    // Clean up temp files after successful upload
+    cleanupFiles(req.files);
+
+    // Clean up temp files after successful upload
+    cleanupFiles(req.files);
 
     const transaction = new Transaction({
       type: "course_upload_reward",
@@ -120,21 +155,6 @@ exports.createCourse = async (req, res) => {
     profile.bankBalance = (profile.bankBalance || 0) + UPLOAD_REWARD;
     await profile.save();
 
-    const fs = require('fs');
-    const path = require('path');
-
-    const filesToDelete = [
-      imageFile,
-      videoFile,
-      ...materialFiles
-    ];
-
-    filesToDelete.forEach(file => {
-      if (file && file.path && fs.existsSync(file.path)) {
-        fs.unlinkSync(file.path);
-      }
-    });
-
     res.status(201).json({
       message: "Course created successfully",
       course: {
@@ -143,9 +163,9 @@ exports.createCourse = async (req, res) => {
         description: course.description,
         price: course.price,
         thumbnail_url: course.thumbnail_url,
-        video_url: course.video_url,
         instructor_name: course.instructor_name,
         materials: course.materials.length,
+        content: course.content.length,
         mcqs_count: course.mcqs.length,
         cqs_count: course.cqs.length,
         created_at: course.createdAt
@@ -163,6 +183,7 @@ exports.createCourse = async (req, res) => {
     });
 
   } catch (err) {
+    cleanupFiles(req.files);
     console.error("Create Course Error:", err);
 
     if (err.name === 'ValidationError') {
