@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Upload, Save, ArrowLeft, Plus, X, FileText, Video, Trash2, CheckCircle } from 'lucide-react';
 import Navbar from '../components/Navbar';
+import LoadingSpinner from '../components/ui/LoadingSpinner';
 import { useAuth } from '../context/AuthContext';
 import Swal from 'sweetalert2';
 
@@ -39,18 +40,21 @@ export default function EditCoursePage() {
 
     const fetchCourse = async () => {
         try {
-            const res = await fetch(`${API_BASE}/api/courses/${id}`);
+            const res = await fetch(`${API_BASE}/api/courses/${id}`, {
+                credentials: 'include'
+            });
             if (!res.ok) throw new Error('Failed to load course');
             const data = await res.json();
+            const courseData = data.course || data;
 
-            setCourse(data);
-            setTitle(data.title);
-            setDescription(data.description);
-            setPrice(data.price);
-            setMcqs(data.mcqs || []);
-            setCqs(data.cqs || []);
-            setRequirements(data.requirements || []);
-            setAudience(data.audience || []);
+            setCourse(courseData);
+            setTitle(courseData.title);
+            setDescription(courseData.description);
+            setPrice(courseData.price);
+            setMcqs(courseData.mcqs || []);
+            setCqs(courseData.cqs || []);
+            setRequirements(courseData.requirements || []);
+            setAudience(courseData.audience || []);
 
         } catch (error) {
             console.error(error);
