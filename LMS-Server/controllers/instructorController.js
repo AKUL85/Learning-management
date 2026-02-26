@@ -210,7 +210,14 @@ exports.getDashboard = async (req, res) => {
     const courses = await Course.find({ instructor_id: profile._id.toString() }).sort({ createdAt: -1 });
     const transactions = await Transaction.find({ to_user_id: profile._id }).sort({ createdAt: -1 });
 
-    res.json({ profile, courses, transactions });
+    // Count unique students enrolled in this instructor's courses
+    const courseIds = courses.map(c => c._id);
+    const totalStudents = await Profile.countDocuments({
+      role: 'learner',
+      enrolledCourses: { $in: courseIds }
+    });
+
+    res.json({ profile, courses, transactions, totalStudents });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });

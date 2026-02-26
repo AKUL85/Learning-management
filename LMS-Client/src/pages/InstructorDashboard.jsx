@@ -49,6 +49,7 @@ const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 export default function InstructorDashboard() {
   const [courses, setCourses] = useState([]);
   const [transactions, setTransactions] = useState([]);
+  const [totalStudents, setTotalStudents] = useState(0);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isCreatingCourse, setIsCreatingCourse] = useState(false);
@@ -88,6 +89,7 @@ export default function InstructorDashboard() {
       const data = await res.json();
       setCourses(data.courses || []);
       setTransactions(data.transactions || []);
+      setTotalStudents(data.totalStudents || 0);
       if (data.profile && refreshProfile) refreshProfile(data.profile);
     } catch (err) {
       console.error(err);
@@ -304,7 +306,7 @@ export default function InstructorDashboard() {
           totalEarnings={totalEarnings}
           pendingTransactionsCount={pendingTransactions.length}
           pendingCoursesCount={courses.filter(c => c.status === 'pending').length}
-          totalAudience={transactions.filter((t) => t.type === 'course_purchase').length}
+          totalAudience={totalStudents}
         />
 
         {/* CHARTS */}

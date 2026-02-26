@@ -111,7 +111,7 @@ export default function PurchaseCard({ course, isEnrolled, onPurchase, onGoToCou
             </motion.button>
           )
         ) : profile?.role === 'instructor' ? (
-          (profile?._id === course.instructor_id || profile?.id === course.instructor_id) ? (
+          (profile?._id === (course.instructor_id?._id || course.instructor_id) || profile?.id === (course.instructor_id?._id || course.instructor_id)) ? (
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
