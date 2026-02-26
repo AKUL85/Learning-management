@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import axios from "axios";
 
-//  FIX: Always call backend at http://localhost:4000
+
 axios.defaults.baseURL = "http://localhost:4000";
 axios.defaults.withCredentials = true;
 
@@ -12,7 +12,7 @@ export const AuthProvider = ({ children }) => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch logged-in user
+ 
   const fetchCurrentUser = async () => {
     try {
       const res = await axios.get("/api/auth/me");

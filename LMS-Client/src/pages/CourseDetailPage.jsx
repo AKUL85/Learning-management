@@ -213,14 +213,7 @@ export default function CourseDetailPage() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-900">
-        <Navbar />
-        <div className="flex items-center justify-center h-96">
-          <LoadingSpinner />
-        </div>
-      </div>
-    );
+    return <LoadingSpinner message="Accessing course details..." />;
   }
 
   if (!course) {

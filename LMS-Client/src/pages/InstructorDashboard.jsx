@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend } from 'chart.js';
 import Navbar from '../components/Navbar';
 import Swal from 'sweetalert2';
 import Toast from '../components/ui/Toast';
@@ -9,13 +8,10 @@ import Toast from '../components/ui/Toast';
 // Component Imports
 import InstructorHeader from '../components/dashboard/InstructorHeader';
 import InstructorStats from '../components/dashboard/InstructorStats';
-import InstructorCharts from '../components/dashboard/InstructorCharts';
 import PendingTransactions from '../components/dashboard/PendingTransactions';
 import InstructorCourseList from '../components/dashboard/InstructorCourseList';
 import CreateCourseModal from '../components/dashboard/CreateCourseModal';
 import InstructorDashboardLoader from '../components/dashboard/InstructorDashboardLoader';
-
-ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend);
 
 // Toast hook (extracted here locally or could be in useToast hook file, but keeping simple as per plan)
 const useToast = () => {
@@ -25,23 +21,6 @@ const useToast = () => {
     setTimeout(() => setToastState(prev => ({ ...prev, isVisible: false })), 3000);
   };
   return { toast: toastState, showToast, setToastState };
-};
-
-const chartOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: { labels: { color: '#D1D5DB' } },
-    tooltip: {
-      backgroundColor: 'rgba(31, 41, 55, 0.9)',
-      titleColor: '#F3F4F6',
-      bodyColor: '#E5E7EB',
-    }
-  },
-  scales: {
-    y: { beginAtZero: true, ticks: { color: '#9CA3AF' }, grid: { color: 'rgba(55, 65, 81, 0.5)' } },
-    x: { ticks: { color: '#9CA3AF' }, grid: { color: 'rgba(55, 65, 81, 0.5)' } }
-  }
 };
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000';
@@ -98,7 +77,7 @@ export default function InstructorDashboard() {
   }
 
   async function createCourse() {
-    if (!profile || !newCourse.title || !newCourse.description || !newCourse.price ) {
+    if (!profile || !newCourse.title || !newCourse.description || !newCourse.price) {
       showToast('Error: Please fill in all required fields.', 'error');
       return;
     }
@@ -258,34 +237,6 @@ export default function InstructorDashboard() {
 
   const pendingTransactions = transactions.filter((t) => t.status === 'pending');
 
-  const earningsData = {
-    labels: courses.map((c) => (c.title.length > 15 ? c.title.substring(0, 15) + '...' : c.title)),
-    datasets: [
-      {
-        label: 'Course Price ($)',
-        data: courses.map((c) => c.price),
-        borderRadius: 8,
-      },
-    ],
-  };
-
-  const transactionData = {
-    labels: ['Course Rewards', 'Student Enrollments', 'Total Revenue'],
-    datasets: [
-      {
-        label: 'Earnings ($)',
-        data: [
-          transactions.filter((t) => t.type === 'course_upload_reward' && t.status === 'completed').length * 500,
-          transactions
-            .filter((t) => t.type === 'course_purchase' && t.status === 'completed')
-            .reduce((sum, t) => sum + t.amount, 0),
-          totalEarnings,
-        ],
-        borderWidth: 2,
-      },
-    ],
-  };
-
   if (loading) return <InstructorDashboardLoader />;
 
   return (
@@ -305,13 +256,6 @@ export default function InstructorDashboard() {
           pendingTransactionsCount={pendingTransactions.length}
           pendingCoursesCount={courses.filter(c => c.status === 'pending').length}
           totalAudience={transactions.filter((t) => t.type === 'course_purchase').length}
-        />
-
-        {/* CHARTS */}
-        <InstructorCharts
-          earningsData={earningsData}
-          transactionData={transactionData}
-          chartOptions={chartOptions}
         />
 
         {/* PENDING TRANSACTIONS */}

@@ -8,7 +8,6 @@ import Toast from '../components/ui/Toast';
 import DashboardLoader from '../components/dashboard/DashboardLoader';
 import DashboardHeader from '../components/dashboard/DashboardHeader';
 import MetricCards from '../components/dashboard/MetricCards';
-import ProgressCharts from '../components/dashboard/ProgressCharts';
 import CourseList from '../components/dashboard/CourseList';
 
 export default function LearnerDashboard() {
@@ -24,60 +23,7 @@ export default function LearnerDashboard() {
   };
 
 
-  const mockEnrollments = useMemo(() => ([
-    {
-      id: 1,
-      learner_id: "12345",
-      course_id: 101,
-      is_completed: false,
-      certificate_url: null,
-      course: {
-        title: "Cloud Infrastructure Fundamentals",
-        description: "Concepts of compute, storage, and networking in the cloud.",
-        instructor_name: "Dr. Virtualization",
-      },
-    },
-    {
-      id: 2,
-      learner_id: "12345",
-      course_id: 102,
-      is_completed: true,
-      certificate_url: "https://certificate.learnhub.com/2",
-      course: {
-        title: "Serverless Application Development",
-        description: "Building APIs with Function as a Service (FaaS).",
-        instructor_name: "Ms. Lambda",
-      },
-    },
-    {
-      id: 3,
-      learner_id: "12345",
-      course_id: 103,
-      is_completed: false,
-      certificate_url: null,
-      course: {
-        title: "DevOps and Automation with CI/CD",
-        description: "Implementing automated pipelines for deployment.",
-        instructor_name: "Engineer Jenkins",
-      },
-    },
-  ]), []);
 
-  const mockMaterials = useMemo(() => ({
-    101: [
-      { id: 1, title: "Module 1: EC2 and Compute Basics", content_type: "text" },
-      { id: 2, title: "Module 2: S3 and Object Storage (Video)", content_type: "video" },
-      { id: 3, title: "Quiz 1: Network Concepts", content_type: "mcq" },
-    ],
-    102: [
-      { id: 4, title: "Lecture 1: Intro to FaaS", content_type: "video" },
-      { id: 5, title: "Deep Dive: Asynchronous Patterns", content_type: "text" },
-    ],
-    103: [
-      { id: 6, title: "Pipeline Setup Guide", content_type: "text" },
-      { id: 7, title: "Security Best Practices", content_type: "audio" },
-    ],
-  }), []);
 
 
   const { profile, refreshProfile } = useAuth();
@@ -125,39 +71,19 @@ export default function LearnerDashboard() {
         const courseIdStr = typeof course._id === 'object' ? course._id.toString() : String(course._id);
         const courseProgress = progressData[courseIdStr];
 
-        let completionPercentage = 0;
-        let isCompleted = false;
-
-        if (courseProgress) {
-          isCompleted = courseProgress.isCompleted;
-
-          // Calculate percentage based on video count
-          let totalVideos = 0;
-          if (course.content) {
-            course.content.forEach(s => {
-              if (s.videos) totalVideos += s.videos.length;
-            });
-          }
-
-          const completedCount = courseProgress.completedVideos?.length || 0;
-
-          if (totalVideos > 0) {
-            // Prevent percentage > 100 which theoretically shouldn't happen but safe to cap
-            completionPercentage = Math.min(100, Math.round((completedCount / totalVideos) * 100));
-          } else if (isCompleted) {
-            // If no videos but marked complete (e.g. manually), show 100%
-            completionPercentage = 100;
-          }
-        }
+        // Prioritize data from courseProgress, fallback to enriched profile data
+        const completionPercentage = courseProgress?.completionPercentage ?? course.progress_percentage ?? 0;
+        const isCompleted = courseProgress?.isCompleted ?? course.is_completed ?? (completionPercentage >= 100);
+        const status = courseProgress?.status ?? (isCompleted ? 'Completed' : 'In Progress');
 
         return {
           id: course._id,
-          learner_id: profile.user,
+          learner_id: profile.user?._id || profile.user,
           course_id: course._id,
-          is_completed: isCompleted,
+          is_completed: !!isCompleted,
+          status: status,
           completion_percentage: completionPercentage,
-          // Certificate URL generation (mock for now, but based on real status)
-          certificate_url: isCompleted ? `http://localhost:4000/api/certificates/${course._id}` : null,
+          certificate_url: isCompleted ? `http://localhost:4000/api/progress/${profile.user?._id || profile.user}/${course._id}/certificate` : null,
           course: {
             title: course.title,
             description: course.description,
@@ -174,7 +100,6 @@ export default function LearnerDashboard() {
     const enrollment = enrollments.find(e => e.course_id === courseId);
     if (enrollment && enrollment.fullCourseData) {
       // Flatten content and materials for the view
-      // The dashboard expects: { id, title, content_type }
       const mixedMaterials = [];
 
       // Add downloadable materials
@@ -183,7 +108,7 @@ export default function LearnerDashboard() {
           mixedMaterials.push({
             id: `mat-${idx}`,
             title: `Resource: ${m.title}`,
-            content_type: 'text' // generic for downloadables
+            content_type: 'text'
           });
         });
       }
@@ -209,12 +134,7 @@ export default function LearnerDashboard() {
     }
   };
 
-  const completeCourse = async (enrollmentId) => {
-    // Placeholder for now as backend doesn't track status per enrollment yet
-    showToast("Completion tracking coming soon!", "success");
-  };
-
-  // Toggle course expand/materials using the existing logic
+  // Toggle course expand/materials
   const handleToggleCourse = (courseId) => {
     const newSelectedId = selectedCourseId === courseId ? null : courseId;
     setSelectedCourseId(newSelectedId);
@@ -223,63 +143,8 @@ export default function LearnerDashboard() {
     }
   };
 
-  // ------------------------
-  // CHART DATA (Styled for Dark Mode)
-  // ------------------------
   const completedCount = enrollments.filter((e) => e.is_completed).length;
   const inProgressCount = enrollments.length - completedCount;
-
-  const pieData = {
-    labels: ['Completed', 'In Progress'],
-    datasets: [
-      {
-        data: [completedCount, inProgressCount],
-        backgroundColor: ['#10B981', '#06B6D4'], // Green and Cyan
-        borderColor: '#1F2937', // Dark border
-        borderWidth: 2,
-      },
-    ],
-  };
-
-  const barData = {
-    labels: enrollments.map((e) => e.course.title.substring(0, 25) + (e.course.title.length > 25 ? '...' : '')),
-    datasets: [
-      {
-        label: 'Progress (%)',
-        data: enrollments.map((e) => e.completion_percentage || 0),
-        backgroundColor: enrollments.map((e) => (e.is_completed ? '#10B981' : '#0EA5E9')), // Green and Blue/Cyan
-        borderColor: enrollments.map((e) => (e.is_completed ? '#059669' : '#0EA5E9')),
-        borderWidth: 1,
-        borderRadius: 4,
-        hoverBackgroundColor: '#076D92',
-      },
-    ],
-  };
-
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { labels: { color: '#D1D5DB' } }, // Light gray text for dark mode
-      tooltip: {
-        backgroundColor: 'rgba(31, 41, 55, 0.9)', // Darker tooltip background
-        titleColor: '#F3F4F6',
-        bodyColor: '#E5E7EB',
-      }
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        max: 100,
-        ticks: { color: '#9CA3AF', callback: (v) => v + "%" }, // Light gray ticks
-        grid: { color: 'rgba(55, 65, 81, 0.5)' } // Dark, subtle grid lines
-      },
-      x: {
-        ticks: { autoSkip: false, maxRotation: 45, minRotation: 45, color: '#9CA3AF' }, // Light gray ticks
-        grid: { color: 'rgba(55, 65, 81, 0.5)' }
-      }
-    }
-  };
 
   if (loading) return <DashboardLoader />;
 
@@ -298,15 +163,6 @@ export default function LearnerDashboard() {
           completedCount={completedCount}
           inProgressCount={inProgressCount}
         />
-
-        {/* CHARTS & ANALYTICS */}
-        {enrollments.length > 0 && (
-          <ProgressCharts
-            pieData={pieData}
-            barData={barData}
-            chartOptions={chartOptions}
-          />
-        )}
 
         {/* COURSES LIST */}
         <CourseList

@@ -5,6 +5,7 @@ const CourseProgressSchema = new mongoose.Schema({
     course: { type: mongoose.Schema.Types.ObjectId, ref: 'Course', required: true },
     completedVideos: [{ type: mongoose.Schema.Types.ObjectId }],
     isCompleted: { type: Boolean, default: false },
+    status: { type: String, enum: ['Not Started', 'In Progress', 'Completed'], default: 'Not Started' },
     percentage: { type: Number, default: 0 },
     completedAt: { type: Date },
     lastAccessed: { type: Date, default: Date.now }

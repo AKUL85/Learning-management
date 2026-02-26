@@ -8,6 +8,8 @@ const profileSchema = new mongoose.Schema({
   bankSecret: { type: String, default: null },
   bankBalance: { type: Number, default: 1000.00 },
   enrolledCourses: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Course' }],
+  coursesCompleted: { type: Number, default: 0 },
+  coursesPurchased: { type: Number, default: 0 },
   speciality: { type: String, default: '' },
   profession: { type: String, default: '' },
   bio: { type: String, default: '' },

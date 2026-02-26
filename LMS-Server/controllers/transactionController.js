@@ -79,6 +79,7 @@ exports.purchaseCourse = async (req, res) => {
         profile.bankBalance -= price;
 
         profile.enrolledCourses.push(courseId);
+        profile.coursesPurchased = (profile.coursesPurchased || 0) + 1;
         await profile.save({ session });
 
         const purchaseTx = new Transaction({

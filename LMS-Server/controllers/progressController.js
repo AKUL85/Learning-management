@@ -75,8 +75,35 @@ exports.getCertificate = async (req, res) => {
 exports.getProgress = async (req, res) => {
     try {
         const { userId, courseId } = req.params;
-        const progress = await CourseProgress.findOne({ user: userId, course: courseId });
-        res.json({ progress: progress || null });
+        const progress = await CourseProgress.findOne({ user: userId, course: courseId })
+            .populate({
+                path: 'course',
+                select: 'title thumbnail_url instructor_name price status duration_hours content'
+            });
+
+        if (progress) {
+            const formattedProgress = {
+                _id: progress._id,
+                userId: progress.user,
+                courseId: progress.course._id,
+                courseName: progress.course.title,
+                thumbnail: progress.course.thumbnail_url,
+                instructor: progress.course.instructor_name,
+                price: progress.course.price,
+                status: progress.status || 'Not Started',
+                duration: progress.course.duration_hours,
+                completionPercentage: progress.percentage,
+                isCompleted: progress.status === 'Completed',
+                completedVideos: progress.completedVideos,
+                totalVideos: progress.course.content.reduce((sum, section) => sum + section.videos.length, 0),
+                lastAccessedAt: progress.lastAccessed,
+                completedAt: progress.completedAt,
+                startedAt: progress.createdAt
+            };
+            res.json({ progress: formattedProgress });
+        } else {
+            res.json({ progress: null });
+        }
     } catch (error) {
         console.error('Get progress error:', error);
         res.status(500).json({ message: 'Internal server error' });
@@ -86,11 +113,44 @@ exports.getProgress = async (req, res) => {
 exports.getAllProgress = async (req, res) => {
     try {
         const { userId } = req.params;
-        const progress = await CourseProgress.find({ user: userId });
-        res.json({ progress });
+        const progress = await CourseProgress.find({ user: userId })
+            .populate({
+                path: 'course',
+                select: 'title thumbnail_url instructor_name price status duration_hours'
+            })
+            .sort({ lastAccessed: -1 });
+
+        // Format response with course details and ensure consistent field types
+        const formattedProgress = progress.map(p => {
+            // Ensure courseId is always a string for frontend matching
+            const courseIdValue = p.course?._id ? p.course._id.toString() : p.course.toString();
+
+            return {
+                _id: p._id,
+                userId: p.user.toString(),
+                course: {
+                    _id: courseIdValue  // Include course object with _id as string
+                },
+                courseId: courseIdValue,  // Also include direct courseId field as string
+                courseName: p.course?.title || 'Unknown Course',
+                thumbnail: p.course?.thumbnail_url || '',
+                instructor: p.course?.instructor_name || 'Unknown Instructor',
+                price: p.course?.price || 0,
+                status: p.status || 'Not Started',
+                duration: p.course?.duration_hours || 0,
+                completionPercentage: p.percentage || 0,
+                isCompleted: p.status === 'Completed',
+                completedVideos: p.completedVideos ? p.completedVideos.length : 0,
+                lastAccessedAt: p.lastAccessed,
+                completedAt: p.completedAt,
+                startedAt: p.createdAt
+            };
+        });
+
+        res.json({ progress: formattedProgress });
     } catch (error) {
         console.error('Get all progress error:', error);
-        res.status(500).json({ message: 'Internal server error' });
+        res.status(500).json({ message: 'Internal server error', error: error.message });
     }
 };
 
@@ -105,26 +165,42 @@ exports.updateProgress = async (req, res) => {
             progress = new CourseProgress({ user: userId, course: courseId, completedVideos: [] });
         }
 
-        if (!progress.completedVideos.some(v => v.toString() === videoId)) {
+        // Track if course was already completed before this update
+        const wasCompletedBefore = progress.isCompleted;
+
+        // Add video to completed videos if not already there
+        if (videoId && !progress.completedVideos.some(v => v.toString() === videoId.toString())) {
             progress.completedVideos.push(videoId);
         }
 
+        // Recalculate percentage from course content
         const course = await Course.findById(courseId);
-        if (course) {
+        if (course && course.content && course.content.length > 0) {
             let totalVideos = 0;
             course.content.forEach(section => {
-                totalVideos += section.videos.length;
+                if (section.videos) {
+                    totalVideos += section.videos.length;
+                }
             });
 
             if (totalVideos > 0) {
-                const percentage = Math.round((progress.completedVideos.length / totalVideos) * 100);
-                progress.percentage = percentage;
+                const completedCount = progress.completedVideos.length;
+                const percentage = Math.round((completedCount / totalVideos) * 100);
+                progress.percentage = Math.min(100, percentage);
 
+                // Update Status based on completion percentage
                 if (percentage >= 100) {
                     progress.isCompleted = true;
-                    if (!progress.completedAt) progress.completedAt = new Date();
+                    progress.status = 'Completed';
+                    if (!progress.completedAt) {
+                        progress.completedAt = new Date();
+                    }
+                } else if (percentage > 0) {
+                    progress.isCompleted = false;
+                    progress.status = 'In Progress';
                 } else {
                     progress.isCompleted = false;
+                    progress.status = 'Not Started';
                 }
             }
         }
@@ -132,7 +208,20 @@ exports.updateProgress = async (req, res) => {
         progress.lastAccessed = new Date();
         await progress.save();
 
-        res.json({ progress });
+        // Update Profile: increment coursesCompleted only if course just became completed
+        if (!wasCompletedBefore && progress.status === 'Completed') {
+            const profile = await Profile.findOne({ user: userId });
+            if (profile) {
+                profile.coursesCompleted = (profile.coursesCompleted || 0) + 1;
+                await profile.save();
+                console.log(`Course ${courseId} completed by user ${userId}. Total completed: ${profile.coursesCompleted}`);
+            }
+        }
+
+        res.json({
+            progress,
+            message: progress.status === 'Completed' && !wasCompletedBefore ? 'Course completed!' : 'Progress updated'
+        });
     } catch (error) {
         console.error('Update progress error:', error);
         res.status(500).json({ message: 'Internal server error' });
