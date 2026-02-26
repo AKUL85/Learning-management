@@ -156,8 +156,7 @@ export default function LearnerDashboard() {
           course_id: course._id,
           is_completed: isCompleted,
           completion_percentage: completionPercentage,
-          // Certificate URL generation (mock for now, but based on real status)
-          certificate_url: isCompleted ? `http://localhost:4000/api/certificates/${course._id}` : null,
+          certificate_url: isCompleted ? `${import.meta.env.VITE_API_URL || 'http://localhost:4000'}/api/progress/${profile.user}/${course._id}/certificate` : null,
           course: {
             title: course.title,
             description: course.description,

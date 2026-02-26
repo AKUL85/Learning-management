@@ -13,6 +13,18 @@ if (!fs.existsSync(materialsDir)) {
 
 const UPLOAD_REWARD = 500;
 
+// Format seconds into a human-readable duration string (e.g. "5:23" or "1:02:15")
+const formatSecondsToTime = (totalSeconds) => {
+  if (!totalSeconds || totalSeconds <= 0) return "0:00";
+  const hrs = Math.floor(totalSeconds / 3600);
+  const mins = Math.floor((totalSeconds % 3600) / 60);
+  const secs = Math.floor(totalSeconds % 60);
+  if (hrs > 0) {
+    return `${hrs}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  }
+  return `${mins}:${String(secs).padStart(2, '0')}`;
+};
+
 // Extract the Cloudinary public_id from a secure_url
 const extractPublicId = (url) => {
   try {
@@ -78,6 +90,7 @@ exports.createCourse = async (req, res) => {
 
     let courseThumbnail = "";
     let introVideo = "";
+    let introVideoDuration = 0;
     const materialsList = [];
 
     if (req.files) {
@@ -99,6 +112,7 @@ exports.createCourse = async (req, res) => {
             resource_type: "video",
           });
           introVideo = uploadedVid.secure_url;
+          introVideoDuration = uploadedVid.duration || 0;
         } catch (err) {
           console.error("Intro video upload failed:", err);
         }
@@ -147,7 +161,7 @@ exports.createCourse = async (req, res) => {
         videos: [
           {
             title: "Course Overview",
-            duration: "0:00",
+            duration: formatSecondsToTime(introVideoDuration),
             video_url: introVideo
           }
         ]
@@ -448,7 +462,7 @@ const handleCourseUpdate = async (req, res) => {
             section: `Module ${course.content ? course.content.length + newContentBlocks.length + 1 : newContentBlocks.length + 1}`,
             videos: [{
               title: customTitle,
-              duration: "0:00",
+              duration: formatSecondsToTime(uploadedVid.duration || 0),
               video_url: uploadedVid.secure_url
             }]
           });

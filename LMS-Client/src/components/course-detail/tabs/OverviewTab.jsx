@@ -9,6 +9,23 @@ const LearningObjective = ({ children }) => (
   </div>
 );
 
+const parseDurationSeconds = (dur) => {
+  if (!dur) return 0;
+  const parts = String(dur).split(':').map(Number);
+  if (parts.some(isNaN)) return 0;
+  if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+  if (parts.length === 2) return parts[0] * 60 + parts[1];
+  return 0;
+};
+
+const formatTotalSeconds = (totalSec) => {
+  if (totalSec <= 0) return null;
+  const hrs = Math.floor(totalSec / 3600);
+  const mins = Math.floor((totalSec % 3600) / 60);
+  if (hrs > 0) return `${hrs}h ${mins}m`;
+  return `${mins}m`;
+};
+
 const SectionItem = ({ title, lectures, duration, isPreview = false }) => (
   <div className="flex items-center justify-between p-5 bg-gray-800/50 rounded-lg border border-gray-700 hover:border-cyan-600/50 transition-all group cursor-pointer">
     <div className="flex items-center space-x-4">
@@ -17,7 +34,7 @@ const SectionItem = ({ title, lectures, duration, isPreview = false }) => (
       </div>
       <div>
         <h4 className="font-medium text-white">{title}</h4>
-        <p className="text-sm text-gray-400">{lectures} lectures • {duration}</p>
+        <p className="text-sm text-gray-400">{lectures} lecture{lectures !== 1 ? 's' : ''}{duration ? ` • ${duration}` : ''}</p>
       </div>
     </div>
     {isPreview && (
@@ -83,15 +100,18 @@ export default function OverviewTab({ course }) {
         </h3>
 
         <div className="space-y-4">
-          {modules.map((mod, i) => (
-            <SectionItem
-              key={i}
-              title={mod.section || `Module ${i + 1}`}
-              lectures={mod.videos ? mod.videos.length : 0}
-              duration={`${mod.videos ? mod.videos.length * 10 : 0}m (est)`}
-              isPreview={i === 0}
-            />
-          ))}
+          {modules.map((mod, i) => {
+            const modSeconds = (mod.videos || []).reduce((sum, v) => sum + parseDurationSeconds(v.duration), 0);
+            return (
+              <SectionItem
+                key={i}
+                title={mod.section || `Module ${i + 1}`}
+                lectures={mod.videos ? mod.videos.length : 0}
+                duration={formatTotalSeconds(modSeconds)}
+                isPreview={i === 0}
+              />
+            );
+          })}
           {modules.length === 0 && <p className="text-gray-400">No content added yet.</p>}
         </div>
 

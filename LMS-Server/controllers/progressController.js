@@ -9,7 +9,7 @@ exports.getCertificate = async (req, res) => {
         const progress = await CourseProgress.findOne({ user: userId, course: courseId });
 
         if (!progress || !progress.isCompleted) {
-            return res.status(403).json({ message: 'Course not completed yet' });
+            return res.status(403).json({ message: 'Course not completed yet. Complete all videos to earn your certificate.' });
         }
 
         const course = await Course.findById(courseId);
@@ -22,6 +22,7 @@ exports.getCertificate = async (req, res) => {
         const doc = new PDFDocument({
             layout: 'landscape',
             size: 'A4',
+            margins: { top: 0, bottom: 0, left: 0, right: 0 }
         });
 
         // Set response headers
@@ -30,45 +31,95 @@ exports.getCertificate = async (req, res) => {
 
         doc.pipe(res);
 
-        // Certificate Background and Border
-        doc.rect(20, 20, doc.page.width - 40, doc.page.height - 40).lineWidth(10).stroke('#00B4D8');
-        doc.rect(30, 30, doc.page.width - 60, doc.page.height - 60).lineWidth(2).stroke('#03045E');
+        const pageW = doc.page.width;
+        const pageH = doc.page.height;
 
-        // Certificate Header
-        doc.fontSize(40).fillColor('#03045E').text('CERTIFICATE', { align: 'center', underline: true });
-        doc.moveDown();
-        doc.fontSize(20).text('OF COMPLETION', { align: 'center' });
-        doc.moveDown(2);
+        // Background
+        doc.rect(0, 0, pageW, pageH).fill('#fdfcfb');
 
-        // Student Info
-        doc.fontSize(16).fillColor('#444').text('This is to certify that', { align: 'center' });
-        doc.moveDown(0.5);
-        doc.fontSize(30).fillColor('#000').text(profile.fullName, { align: 'center', bold: true });
-        doc.moveDown(0.5);
-        doc.fontSize(16).fillColor('#444').text('has successfully completed the course', { align: 'center' });
-        doc.moveDown(0.5);
-        doc.fontSize(24).fillColor('#03045E').text(course.title, { align: 'center' });
-        doc.moveDown(2);
+        // Decorative outer border
+        doc.rect(20, 20, pageW - 40, pageH - 40).lineWidth(3).stroke('#0e7490');
+        doc.rect(26, 26, pageW - 52, pageH - 52).lineWidth(1).stroke('#22d3ee');
 
-        // Date and ID
-        const dateStr = progress.completedAt ? progress.completedAt.toLocaleDateString() : new Date().toLocaleDateString();
-        doc.fontSize(12).fillColor('#666').text(`Completion Date: ${dateStr}`, { align: 'center' });
-        doc.text(`Certificate ID: ${progress._id}`, { align: 'center' });
+        // Corner accents (top-left, top-right, bottom-left, bottom-right)
+        const cornerSize = 40;
+        const drawCorner = (x, y, dx, dy) => {
+            doc.moveTo(x, y).lineTo(x + dx * cornerSize, y).lineWidth(3).stroke('#0e7490');
+            doc.moveTo(x, y).lineTo(x, y + dy * cornerSize).lineWidth(3).stroke('#0e7490');
+        };
+        drawCorner(35, 35, 1, 1);
+        drawCorner(pageW - 35, 35, -1, 1);
+        drawCorner(35, pageH - 35, 1, -1);
+        drawCorner(pageW - 35, pageH - 35, -1, -1);
 
-        // Signature area
-        doc.moveDown(2);
-        const signatureLineY = doc.y;
-        doc.moveTo(150, signatureLineY).lineTo(350, signatureLineY).stroke();
-        doc.moveTo(doc.page.width - 350, signatureLineY).lineTo(doc.page.width - 150, signatureLineY).stroke();
+        // Top decorative line
+        doc.moveTo(pageW / 2 - 120, 60).lineTo(pageW / 2 + 120, 60).lineWidth(2).stroke('#0e7490');
 
-        doc.fontSize(10).text('Course Instructor', 150, signatureLineY + 10, { width: 200, align: 'center' });
-        doc.text('LMS Platform Director', doc.page.width - 350, signatureLineY + 10, { width: 200, align: 'center' });
+        // Platform branding
+        doc.fontSize(11).fillColor('#64748b').text('LMS Learning Platform', 0, 72, { align: 'center', width: pageW });
+
+        // Main title
+        doc.fontSize(44).fillColor('#0e7490').text('CERTIFICATE', 0, 100, { align: 'center', width: pageW, characterSpacing: 8 });
+        doc.fontSize(18).fillColor('#475569').text('OF COMPLETION', 0, 155, { align: 'center', width: pageW, characterSpacing: 4 });
+
+        // Divider
+        doc.moveTo(pageW / 2 - 80, 185).lineTo(pageW / 2 + 80, 185).lineWidth(1.5).stroke('#22d3ee');
+
+        // Body text
+        doc.fontSize(13).fillColor('#64748b').text('This is to certify that', 0, 205, { align: 'center', width: pageW });
+
+        // Student name with underline accent
+        const nameY = 235;
+        doc.fontSize(32).fillColor('#0f172a').text(profile.fullName, 0, nameY, { align: 'center', width: pageW });
+        const nameWidth = doc.widthOfString(profile.fullName);
+        const nameX = (pageW - nameWidth) / 2;
+        doc.moveTo(nameX, nameY + 40).lineTo(nameX + nameWidth, nameY + 40).lineWidth(1).stroke('#0e7490');
+
+        // Course completion text
+        doc.fontSize(13).fillColor('#64748b').text('has successfully completed the course', 0, 290, { align: 'center', width: pageW });
+
+        // Course title
+        doc.fontSize(24).fillColor('#0e7490').text(`"${course.title}"`, 60, 318, { align: 'center', width: pageW - 120 });
+
+        // Instructor info
+        const instructorName = course.instructor_name || 'Instructor';
+        doc.fontSize(12).fillColor('#64748b').text(`Taught by ${instructorName}`, 0, 360, { align: 'center', width: pageW });
+
+        // Completion date and certificate ID
+        const completionDate = progress.completedAt
+            ? new Date(progress.completedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+            : new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+        doc.fontSize(10).fillColor('#94a3b8').text(`Completed on ${completionDate}`, 0, 390, { align: 'center', width: pageW });
+        doc.fontSize(9).fillColor('#cbd5e1').text(`Certificate ID: ${progress._id}`, 0, 408, { align: 'center', width: pageW });
+
+        // Signature lines
+        const sigY = 450;
+        const leftSigX = pageW / 2 - 230;
+        const rightSigX = pageW / 2 + 30;
+        const sigWidth = 200;
+
+        doc.moveTo(leftSigX, sigY).lineTo(leftSigX + sigWidth, sigY).lineWidth(1).stroke('#94a3b8');
+        doc.moveTo(rightSigX, sigY).lineTo(rightSigX + sigWidth, sigY).lineWidth(1).stroke('#94a3b8');
+
+        doc.fontSize(10).fillColor('#64748b');
+        doc.text(instructorName, leftSigX, sigY + 8, { width: sigWidth, align: 'center' });
+        doc.fontSize(9).fillColor('#94a3b8').text('Course Instructor', leftSigX, sigY + 22, { width: sigWidth, align: 'center' });
+
+        doc.fontSize(10).fillColor('#64748b');
+        doc.text('LMS Platform', rightSigX, sigY + 8, { width: sigWidth, align: 'center' });
+        doc.fontSize(9).fillColor('#94a3b8').text('Platform Director', rightSigX, sigY + 22, { width: sigWidth, align: 'center' });
+
+        // Bottom decorative line
+        doc.moveTo(pageW / 2 - 120, pageH - 55).lineTo(pageW / 2 + 120, pageH - 55).lineWidth(2).stroke('#0e7490');
 
         doc.end();
 
     } catch (error) {
         console.error('Certificate error:', error);
-        res.status(500).json({ message: 'Internal server error' });
+        if (!res.headersSent) {
+            res.status(500).json({ message: 'Failed to generate certificate' });
+        }
     }
 };
 

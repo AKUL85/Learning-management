@@ -94,6 +94,7 @@ export default function CourseDetailPage() {
   const [course, setCourse] = useState(null);
   const [instructorStats, setInstructorStats] = useState({ totalCourses: 0, totalStudents: 0, rating: "N/A" });
   const [isEnrolled, setIsEnrolled] = useState(false);
+  const [courseProgress, setCourseProgress] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
 
@@ -114,6 +115,24 @@ export default function CourseDetailPage() {
   useEffect(() => {
     checkEnrollment();
   }, [profile, course, id]);
+
+  // Fetch course progress when enrolled
+  useEffect(() => {
+    const fetchProgress = async () => {
+      if (!isEnrolled || !profile?.user || !id || profile?.role !== 'learner') return;
+      try {
+        const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+        const res = await fetch(`${API_BASE}/api/progress/${profile.user}/${id}`, { credentials: 'include' });
+        if (res.ok) {
+          const data = await res.json();
+          setCourseProgress(data.progress);
+        }
+      } catch (err) {
+        console.error('Error fetching course progress:', err);
+      }
+    };
+    fetchProgress();
+  }, [isEnrolled, profile, id]);
 
   const fetchCourse = async () => {
     try {
@@ -286,6 +305,7 @@ export default function CourseDetailPage() {
               course={course}
               isEnrolled={isEnrolled}
               profile={profile}
+              courseProgress={courseProgress}
               onPurchase={() => setShowPurchaseModal(true)}
               onGoToCourse={() => navigate('/learner-dashboard')}
               onPreview={() => {

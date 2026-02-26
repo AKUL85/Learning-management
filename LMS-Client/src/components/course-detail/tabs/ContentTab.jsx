@@ -8,7 +8,16 @@ import { useAuth } from '../../../context/AuthContext';
 const CurriculumSection = ({ section, index, isEnrolled, onVideoSelect, onToggleComplete, isInstructor, isAdmin }) => {
   const [isOpen, setIsOpen] = useState(index === 0); // First section open by default
 
-  const totalDuration = section.lectures.length + " lectures";
+  // Calculate total section duration from individual video durations
+  const sectionTotalSeconds = section.lectures.reduce((sum, l) => {
+    if (!l.duration) return sum;
+    const parts = String(l.duration).split(':').map(Number);
+    if (parts.some(isNaN)) return sum;
+    if (parts.length === 3) return sum + parts[0] * 3600 + parts[1] * 60 + parts[2];
+    if (parts.length === 2) return sum + parts[0] * 60 + parts[1];
+    return sum;
+  }, 0);
+  const sectionDurationStr = sectionTotalSeconds > 0 ? formatDuration(sectionTotalSeconds / 60) : null;
   const completedInSection = section.lectures.filter(l => l.completed).length;
 
   return (
@@ -22,7 +31,7 @@ const CurriculumSection = ({ section, index, isEnrolled, onVideoSelect, onToggle
             {index + 1}. {section.title}
           </h4>
           <p className="text-sm text-gray-400 mt-1">
-            {section.lectures.length} lectures • {formatDuration(totalDuration)}
+            {section.lectures.length} lecture{section.lectures.length !== 1 ? 's' : ''}{sectionDurationStr ? ` • ${sectionDurationStr}` : ''}
             {completedInSection > 0 && (
               <span className="ml-3 text-green-400">
                 • {completedInSection}/{section.lectures.length} completed
@@ -103,12 +112,31 @@ const CurriculumSection = ({ section, index, isEnrolled, onVideoSelect, onToggle
 };
 
 const formatDuration = (input) => {
+  if (!input) return '';
   if (typeof input === 'number') {
+    // input is total minutes
     const h = Math.floor(input / 60);
     const m = input % 60;
     return h > 0 ? `${h}h ${m}m` : `${m}m`;
   }
-  return input || '0m';
+  // String input — could be "M:SS" or "H:MM:SS" from backend
+  const parts = String(input).split(':').map(Number);
+  if (parts.some(isNaN)) return input;
+  let totalSec = 0;
+  if (parts.length === 3) {
+    totalSec = parts[0] * 3600 + parts[1] * 60 + parts[2];
+  } else if (parts.length === 2) {
+    totalSec = parts[0] * 60 + parts[1];
+  } else {
+    return input;
+  }
+  if (totalSec <= 0) return '';
+  const hrs = Math.floor(totalSec / 3600);
+  const mins = Math.floor((totalSec % 3600) / 60);
+  const secs = totalSec % 60;
+  if (hrs > 0) return `${hrs}h ${mins}m`;
+  if (mins > 0) return `${mins}m ${secs > 0 ? secs + 's' : ''}`;
+  return `${secs}s`;
 };
 
 export default function ContentTab({ course, videoPlaying, setVideoPlaying, isEnrolled, isInstructor, isAdmin }) {

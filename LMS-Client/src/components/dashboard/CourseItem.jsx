@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Code, ChevronDown, ChevronUp, Download, Play, FileText, CheckCircle, Headphones } from 'lucide-react';
+import { Code, ChevronDown, ChevronUp, Download, Play, FileText, CheckCircle, Headphones, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const getContentIcon = (type) => {
@@ -15,6 +16,29 @@ const getContentIcon = (type) => {
 
 const CourseItem = ({ enrollment, isExpanded, onToggle, materials }) => {
     const navigate = useNavigate();
+    const [downloading, setDownloading] = useState(false);
+
+    const handleDownloadCertificate = async () => {
+        if (!enrollment.certificate_url) return;
+        setDownloading(true);
+        try {
+            const response = await fetch(enrollment.certificate_url, { credentials: 'include' });
+            if (!response.ok) throw new Error('Failed to download certificate');
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `certificate_${enrollment.course.title.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            a.remove();
+        } catch (err) {
+            console.error('Certificate download error:', err);
+        } finally {
+            setDownloading(false);
+        }
+    };
 
     return (
         <motion.div
@@ -68,15 +92,16 @@ const CourseItem = ({ enrollment, isExpanded, onToggle, materials }) => {
                         </motion.button> */
                         null
                     ) : (
-                        <a
-                            href={enrollment.certificate_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="bg-indigo-600 text-white px-3 py-1.5 text-sm font-medium rounded-lg flex items-center border border-indigo-700 shadow-md hover:bg-indigo-700 transition"
+                        <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={handleDownloadCertificate}
+                            disabled={downloading}
+                            className="bg-indigo-600 text-white px-3 py-1.5 text-sm font-medium rounded-lg flex items-center border border-indigo-700 shadow-md hover:bg-indigo-700 transition disabled:opacity-50"
                         >
-                            <Download className="mr-1 w-4 h-4" />
-                            Download Certificate
-                        </a>
+                            {downloading ? <Loader2 className="mr-1 w-4 h-4 animate-spin" /> : <Download className="mr-1 w-4 h-4" />}
+                            {downloading ? 'Downloading...' : 'Download Certificate'}
+                        </motion.button>
                     )}
                 </div>
             </div>

@@ -1,10 +1,41 @@
 // src/components/course-detail/PurchaseCard.jsx
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import LoadingSpinner from "../ui/LoadingSpinner";
 
-import { ShoppingCart, CheckCircle, Lock, Video, FileText, Globe, Award, MessageSquare, Bookmark, Share2, Play, Edit } from 'lucide-react';
+import { ShoppingCart, CheckCircle, Lock, Video, FileText, Globe, Award, MessageSquare, Bookmark, Share2, Play, Edit, Download, Loader2 } from 'lucide-react';
 
-export default function PurchaseCard({ course, isEnrolled, onPurchase, onGoToCourse, profile, onPreview, onEdit }) {
+export default function PurchaseCard({ course, isEnrolled, onPurchase, onGoToCourse, profile, onPreview, onEdit, courseProgress }) {
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownloadCertificate = async () => {
+    if (!profile?.user || !course?._id) return;
+    setDownloading(true);
+    try {
+      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+      const response = await fetch(`${API_BASE}/api/progress/${profile.user}/${course._id}/certificate`, {
+        credentials: 'include'
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || 'Failed to download certificate');
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `certificate_${course.title.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
+    } catch (err) {
+      console.error('Certificate download error:', err);
+      alert(err.message || 'Failed to download certificate');
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   if (!course) {
     return (
@@ -38,8 +69,39 @@ export default function PurchaseCard({ course, isEnrolled, onPurchase, onGoToCou
 
         {profile?.role === 'learner' ? (
           isEnrolled ? (
-            <div className="w-full bg-green-500/20 border border-green-500 text-green-400 py-4 rounded-xl font-bold uppercase flex items-center justify-center mb-4">
-              <CheckCircle className="w-5 h-5 mr-2" /> Course Enrolled
+            <div>
+              <div className="w-full bg-green-500/20 border border-green-500 text-green-400 py-4 rounded-xl font-bold uppercase flex items-center justify-center mb-4">
+                <CheckCircle className="w-5 h-5 mr-2" /> Course Enrolled
+              </div>
+              {courseProgress?.isCompleted ? (
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={handleDownloadCertificate}
+                  disabled={downloading}
+                  className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 rounded-xl font-bold flex items-center justify-center mb-4 shadow-lg hover:from-indigo-500 hover:to-purple-500 transition-all disabled:opacity-50"
+                >
+                  {downloading ? (
+                    <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Generating...</>
+                  ) : (
+                    <><Award className="w-5 h-5 mr-2" /> Download Certificate</>
+                  )}
+                </motion.button>
+              ) : courseProgress ? (
+                <div className="mb-4">
+                  <div className="flex justify-between text-sm text-gray-400 mb-1">
+                    <span>Progress</span>
+                    <span>{courseProgress.percentage || 0}%</span>
+                  </div>
+                  <div className="w-full bg-gray-700 rounded-full h-2.5">
+                    <div
+                      className="bg-cyan-500 h-2.5 rounded-full transition-all duration-500"
+                      style={{ width: `${courseProgress.percentage || 0}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Complete all videos to earn your certificate</p>
+                </div>
+              ) : null}
             </div>
           ) : (
             <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
