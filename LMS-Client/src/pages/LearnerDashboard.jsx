@@ -10,6 +10,7 @@ import DashboardHeader from '../components/dashboard/DashboardHeader';
 import MetricCards from '../components/dashboard/MetricCards';
 import ProgressCharts from '../components/dashboard/ProgressCharts';
 import CourseList from '../components/dashboard/CourseList';
+import TransactionHistory from '../components/dashboard/TransactionHistory';
 
 export default function LearnerDashboard() {
   const [enrollments, setEnrollments] = useState([]);
@@ -17,6 +18,7 @@ export default function LearnerDashboard() {
   const [materials, setMaterials] = useState([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState({ message: '', type: 'success', isVisible: false });
+  const [learnerTransactions, setLearnerTransactions] = useState([]);
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type, isVisible: true });
@@ -116,6 +118,21 @@ export default function LearnerDashboard() {
       fetchAllProgress();
     }
   }, [profile]); // dependence on profile ensures re-run if context updates profile object
+
+  // Fetch learner transactions
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      if (!profile?.user) return;
+      try {
+        const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+        const res = await axios.get(`${API_BASE}/api/transactions/${profile.user}`);
+        setLearnerTransactions(res.data.transactions || []);
+      } catch (err) {
+        console.error('Error fetching learner transactions', err);
+      }
+    };
+    fetchTransactions();
+  }, [profile]);
 
   useEffect(() => {
     if (profile?.enrolledCourses) {
@@ -314,6 +331,9 @@ export default function LearnerDashboard() {
           onToggleCourse={handleToggleCourse}
           materials={materials}
         />
+
+        {/* TRANSACTION HISTORY */}
+        <TransactionHistory transactions={learnerTransactions} role="learner" />
 
       </div>
     </div>

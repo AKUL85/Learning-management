@@ -50,6 +50,23 @@ exports.rechargeWallet = async (req, res) => {
     }
 };
 
+exports.getUserTransactions = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const profile = await Profile.findOne({ user: userId });
+        if (!profile) return res.status(404).json({ message: 'Profile not found' });
+
+        const transactions = await Transaction.find({ to_user_id: profile._id })
+            .populate('course_id', 'title')
+            .sort({ createdAt: -1 });
+
+        res.json({ transactions });
+    } catch (error) {
+        console.error('Get transactions error:', error);
+        res.status(500).json({ message: 'Server error fetching transactions' });
+    }
+};
+
 exports.purchaseCourse = async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -81,14 +98,33 @@ exports.purchaseCourse = async (req, res) => {
         profile.enrolledCourses.push(courseId);
         await profile.save({ session });
 
-        const purchaseTx = new Transaction({
+        // Transaction for the student (debit — completed immediately)
+        const studentTx = new Transaction({
             type: 'course_purchase',
             to_user_id: profile._id,
             course_id: courseId,
             amount: price,
             status: 'completed'
         });
-        await purchaseTx.save({ session });
+        await studentTx.save({ session });
+
+        // Transaction for the instructor (credit — completed immediately)
+        const instructorProfile = await Profile.findById(course.instructor_id).session(session);
+        if (instructorProfile) {
+            const instructorTx = new Transaction({
+                type: 'course_purchase',
+                to_user_id: instructorProfile._id,
+                course_id: courseId,
+                amount: price,
+                status: 'completed',
+                validated_at: new Date()
+            });
+            await instructorTx.save({ session });
+
+            // Credit the instructor's balance immediately
+            instructorProfile.bankBalance = (instructorProfile.bankBalance || 0) + price;
+            await instructorProfile.save({ session });
+        }
 
         const existingProgress = await CourseProgress.findOne({ user: userId, course: courseId }).session(session);
         if (!existingProgress) {

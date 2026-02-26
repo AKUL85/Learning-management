@@ -5,5 +5,6 @@ const transactionController = require('../controllers/transactionController');
 
 router.post('/recharge', transactionController.rechargeWallet);
 router.post('/purchase', transactionController.purchaseCourse);
+router.get('/:userId', transactionController.getUserTransactions);
 
 module.exports = router;

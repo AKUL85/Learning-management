@@ -10,10 +10,10 @@ import Toast from '../components/ui/Toast';
 import InstructorHeader from '../components/dashboard/InstructorHeader';
 import InstructorStats from '../components/dashboard/InstructorStats';
 import InstructorCharts from '../components/dashboard/InstructorCharts';
-import PendingTransactions from '../components/dashboard/PendingTransactions';
 import InstructorCourseList from '../components/dashboard/InstructorCourseList';
 import CreateCourseModal from '../components/dashboard/CreateCourseModal';
 import InstructorDashboardLoader from '../components/dashboard/InstructorDashboardLoader';
+import TransactionHistory from '../components/dashboard/TransactionHistory';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend);
 
@@ -191,23 +191,6 @@ export default function InstructorDashboard() {
     }
   }
 
-  async function validateTransaction(transaction) {
-    try {
-      const res = await fetch(`${API_BASE}/api/instructor/transaction/${transaction._id}/validate`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Failed to validate');
-      showToast(`Transaction ${transaction._id} validated! +$${transaction.amount.toFixed(2)}.`, 'success');
-      fetchData();
-    } catch (err) {
-      console.error(err);
-      showToast('Error: Failed to validate the transaction.', 'error');
-    }
-  }
-
   async function handleDeleteCourse(courseId) {
     const result = await Swal.fire({
       title: 'Delete Course?',
@@ -258,8 +241,6 @@ export default function InstructorDashboard() {
     .filter((t) => t.status === 'completed')
     .reduce((sum, t) => sum + t.amount, 0);
 
-  const pendingTransactions = transactions.filter((t) => t.status === 'pending');
-
   const earningsData = {
     labels: courses.map((c) => (c.title.length > 15 ? c.title.substring(0, 15) + '...' : c.title)),
     datasets: [
@@ -304,7 +285,7 @@ export default function InstructorDashboard() {
         <InstructorStats
           totalCourses={courses.filter(c => c.status === 'approved').length}
           totalEarnings={totalEarnings}
-          pendingTransactionsCount={pendingTransactions.length}
+          totalTransactions={transactions.length}
           pendingCoursesCount={courses.filter(c => c.status === 'pending').length}
           totalAudience={totalStudents}
         />
@@ -316,20 +297,15 @@ export default function InstructorDashboard() {
           chartOptions={chartOptions}
         />
 
-        {/* PENDING TRANSACTIONS */}
-        {pendingTransactions.length > 0 && (
-          <PendingTransactions
-            transactions={pendingTransactions}
-            onValidate={validateTransaction}
-          />
-        )}
-
         {/* COURSE LIST */}
         <InstructorCourseList
           courses={courses}
           onOpenCreateModal={() => setShowCreateModal(true)}
           onDelete={handleDeleteCourse}
         />
+
+        {/* TRANSACTION HISTORY */}
+        <TransactionHistory transactions={transactions} role="instructor" />
       </div>
 
       {/* CREATE MODAL */}

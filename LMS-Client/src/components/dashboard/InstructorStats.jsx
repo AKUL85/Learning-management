@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
-import { Code, DollarSign, Clock, Users } from 'lucide-react';
+import { Code, DollarSign, Clock, Users, Receipt } from 'lucide-react';
 
-const InstructorStats = ({ totalCourses, totalEarnings, pendingTransactionsCount, pendingCoursesCount, totalAudience }) => {
+const InstructorStats = ({ totalCourses, totalEarnings, totalTransactions, pendingCoursesCount, totalAudience }) => {
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
             <motion.div className="bg-gray-800 rounded-xl border-l-4 border-cyan-500 shadow-xl p-6">
@@ -27,10 +27,10 @@ const InstructorStats = ({ totalCourses, totalEarnings, pendingTransactionsCount
             <motion.div className="bg-gray-800 rounded-xl border-l-4 border-yellow-500 shadow-xl p-6">
                 <div className="flex items-center justify-between">
                     <div>
-                        <p className="text-gray-400 mb-1 uppercase text-sm">Pending Payouts</p>
-                        <p className="text-4xl font-extrabold text-yellow-400 font-mono">{pendingTransactionsCount}</p>
+                        <p className="text-gray-400 mb-1 uppercase text-sm">Transactions</p>
+                        <p className="text-4xl font-extrabold text-yellow-400 font-mono">{totalTransactions}</p>
                     </div>
-                    <Clock className="w-8 h-8 text-yellow-500" />
+                    <Receipt className="w-8 h-8 text-yellow-500" />
                 </div>
             </motion.div>
 

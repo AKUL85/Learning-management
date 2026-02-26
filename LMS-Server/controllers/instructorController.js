@@ -208,7 +208,9 @@ exports.getDashboard = async (req, res) => {
     if (profile.role !== 'instructor') return res.status(403).json({ message: 'Forbidden' });
 
     const courses = await Course.find({ instructor_id: profile._id.toString() }).sort({ createdAt: -1 });
-    const transactions = await Transaction.find({ to_user_id: profile._id }).sort({ createdAt: -1 });
+    const transactions = await Transaction.find({ to_user_id: profile._id })
+      .populate('course_id', 'title')
+      .sort({ createdAt: -1 });
 
     // Count unique students enrolled in this instructor's courses
     const courseIds = courses.map(c => c._id);
