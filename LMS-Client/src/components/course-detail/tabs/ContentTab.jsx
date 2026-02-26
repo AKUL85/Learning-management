@@ -204,11 +204,10 @@ export default function ContentTab({ course, videoPlaying, setVideoPlaying, isEn
         </h3>
 
         <div className="bg-gradient-to-r from-cyan-900/20 to-purple-900/20 rounded-xl p-6 mb-8 border border-cyan-700/30">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center mb-6">
             <div>
               <Clock className="w-10 h-10 text-cyan-400 mx-auto mb-2" />
               <p className="text-2xl font-bold text-white">
-                {/* Logic for duration could be improved if data available */}
                 Variable
               </p>
               <p className="text-gray-400">Total length</p>
@@ -223,11 +222,54 @@ export default function ContentTab({ course, videoPlaying, setVideoPlaying, isEn
             <div>
               <CheckCircle className="w-10 h-10 text-yellow-400 mx-auto mb-2" />
               <p className="text-2xl font-bold text-white">
-                {progress?.completedVideos?.length || 0}
+                {progress?.percentage || 0}%
               </p>
-              <p className="text-gray-400">Completed</p>
+              <p className="text-gray-400">Completion</p>
             </div>
           </div>
+
+          {/* Progress Bar */}
+          <div className="relative pt-1">
+            <div className="flex mb-2 items-center justify-between">
+              <div>
+                <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-cyan-400 bg-cyan-900/30">
+                  Course Progress
+                </span>
+              </div>
+              <div className="text-right">
+                <span className="text-xs font-semibold inline-block text-cyan-400">
+                  {progress?.percentage || 0}%
+                </span>
+              </div>
+            </div>
+            <div className="overflow-hidden h-3 mb-4 text-xs flex rounded-full bg-gray-700">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${progress?.percentage || 0}%` }}
+                transition={{ duration: 1 }}
+                className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-gradient-to-r from-cyan-500 to-purple-500"
+              ></motion.div>
+            </div>
+          </div>
+
+          {/* Download Certificate Button */}
+          {progress?.isCompleted && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-6 flex justify-center"
+            >
+              <a
+                href={`http://localhost:4000/api/progress/${user._id}/${course._id}/certificate`}
+                download
+                className="group relative inline-flex items-center justify-center px-8 py-3 font-bold text-white transition-all duration-200 bg-green-600 font-pj rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-600 hover:bg-green-700"
+              >
+                <FileText className="w-5 h-5 mr-2" />
+                Download Certificate
+                <div className="absolute inset-0 w-full h-full rounded-xl blur-lg bg-green-500/30 -z-10 group-hover:bg-green-500/50 transition-all"></div>
+              </a>
+            </motion.div>
+          )}
         </div>
 
         {isEnrolled ? (
