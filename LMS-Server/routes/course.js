@@ -3,12 +3,12 @@ const router = express.Router();
 const courseController = require('../controllers/courseController');
 const auth = require('../middleware/Auth');
 const { uploadCourseFiles } = require('../middleware/upload');
+const optionalAuth = require('../middleware/OptionalAuth');
 
 router.get('/', courseController.getPublishedCourses);
 
 router.post('/', auth, uploadCourseFiles, courseController.createCourse);
 
-const optionalAuth = require('../middleware/OptionalAuth');
 
 router.get('/:id', optionalAuth, courseController.getCourseById);
 
